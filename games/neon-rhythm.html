@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Neon Rhythm</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: #fff
+        }
+
+        canvas {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 0
+        }
+
+        .screen {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            transition: opacity .4s
+        }
+
+        .screen.hidden {
+            opacity: 0;
+            pointer-events: none
+        }
+
+        #menuScreen {
+            background: radial-gradient(ellipse at 50% 80%, #1a0030, #000 70%)
+        }
+
+        .menu-title {
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, #ff3cac, #f7d452, #00f0ff, #8b5cf6);
+            background-size: 300% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: titleShift 4s ease infinite;
+            letter-spacing: 4px
+        }
+
+        @keyframes titleShift {
+
+            0%,
+            100% {
+                background-position: 0% 50%
+            }
+
+            50% {
+                background-position: 100% 50%
+            }
+        }
+
+        .menu-sub {
+            color: #889;
+            font-size: 1rem;
+            margin: 6px 0 28px
+        }
+
+        .btn {
+            padding: 13px 38px;
+            margin: 5px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .25s;
+            min-width: 210px
+        }
+
+        .btn-play {
+            background: linear-gradient(135deg, #ff3cac, #8b5cf6);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(255, 60, 172, .3)
+        }
+
+        .btn-play:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 30px rgba(139, 92, 246, .5)
+        }
+
+        .btn-sec {
+            background: rgba(255, 255, 255, .07);
+            color: #ccd;
+            border: 1px solid rgba(255, 255, 255, .1)
+        }
+
+        .btn-sec:hover {
+            background: rgba(255, 255, 255, .14);
+            transform: translateY(-2px)
+        }
+
+        .panel {
+            background: rgba(5, 3, 20, .96);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 16px;
+            padding: 26px;
+            max-width: 540px;
+            width: 92%;
+            max-height: 82vh;
+            overflow-y: auto
+        }
+
+        .panel h2 {
+            font-size: 1.6rem;
+            margin-bottom: 16px;
+            background: linear-gradient(90deg, #ff3cac, #00f0ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .panel label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 9px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, .05);
+            font-size: .88rem;
+            color: #aab
+        }
+
+        .panel select,
+        .panel input[type=range],
+        .panel input[type=text] {
+            accent-color: #ff3cac;
+            background: rgba(255, 255, 255, .08);
+            border: 1px solid rgba(255, 255, 255, .12);
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-family: inherit
+        }
+
+        .panel select {
+            min-width: 110px
+        }
+
+        .panel input[type=text] {
+            width: 80px;
+            text-align: center;
+            font-weight: 700;
+            letter-spacing: 4px;
+            text-transform: uppercase
+        }
+
+        .song-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px
+        }
+
+        .song-card {
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 10px;
+            padding: 14px;
+            cursor: pointer;
+            transition: .2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center
+        }
+
+        .song-card:hover,
+        .song-card.selected {
+            border-color: #ff3cac;
+            background: rgba(255, 60, 172, .08);
+            transform: translateX(4px)
+        }
+
+        .song-card .s-title {
+            font-weight: 700;
+            font-size: 1rem
+        }
+
+        .song-card .s-genre {
+            font-size: .75rem;
+            color: #889;
+            margin-top: 2px
+        }
+
+        .song-card .s-bpm {
+            font-size: .8rem;
+            color: #ff3cac;
+            font-weight: 700
+        }
+
+        .diff-btns {
+            display: flex;
+            gap: 6px;
+            margin: 14px 0;
+            flex-wrap: wrap;
+            justify-content: center
+        }
+
+        .diff-btns button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: .85rem;
+            transition: .2s;
+            background: rgba(255, 255, 255, .06);
+            color: #aab;
+            border: 1px solid transparent
+        }
+
+        .diff-btns button:hover,
+        .diff-btns button.active {
+            border-color: #8b5cf6;
+            color: #fff;
+            background: rgba(139, 92, 246, .2)
+        }
+
+        .key-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 7px;
+            margin-top: 10px
+        }
+
+        .key-item {
+            background: rgba(255, 255, 255, .05);
+            padding: 9px 12px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: .85rem
+        }
+
+        .key-item span:last-child {
+            color: #00f0ff;
+            font-weight: 700
+        }
+
+        #gameHUD {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 10px 20px;
+            display: none;
+            justify-content: space-between;
+            z-index: 10;
+            pointer-events: none;
+            font-size: .85rem;
+            background: linear-gradient(180deg, rgba(0, 0, 0, .6), transparent)
+        }
+
+        .hud-g {
+            display: flex;
+            gap: 16px;
+            align-items: center
+        }
+
+        #comboDisplay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            font-size: 2.5rem;
+            font-weight: 900;
+            opacity: 0;
+            transition: opacity .2s;
+            pointer-events: none;
+            text-shadow: 0 0 20px currentColor
+        }
+
+        #hitFeedback {
+            position: fixed;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            font-size: 1.4rem;
+            font-weight: 800;
+            opacity: 0;
+            transition: opacity .15s;
+            pointer-events: none
+        }
+
+        #laneIndicator {
+            position: fixed;
+            bottom: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: none;
+            gap: 8px
+        }
+
+        .lane-key {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1.1rem;
+            border: 2px solid rgba(255, 255, 255, .15);
+            background: rgba(255, 255, 255, .04);
+            transition: .1s
+        }
+
+        .lane-key.pressed {
+            transform: scale(1.15);
+            border-color: #fff
+        }
+
+        .go-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin: 14px 0
+        }
+
+        .go-stat {
+            background: rgba(255, 255, 255, .04);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center
+        }
+
+        .go-stat .val {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: #ff3cac
+        }
+
+        .go-stat .lbl {
+            font-size: .7rem;
+            color: #778;
+            margin-top: 3px
+        }
+
+        .lb-list {
+            margin-top: 10px
+        }
+
+        .lb-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 7px 10px;
+            border-radius: 6px;
+            margin: 2px 0;
+            background: rgba(255, 255, 255, .03)
+        }
+
+        .lb-row:nth-child(1) {
+            background: rgba(255, 60, 172, .12);
+            color: #ff3cac
+        }
+
+        .lb-row:nth-child(2) {
+            background: rgba(192, 192, 192, .07);
+            color: #bbb
+        }
+
+        .lb-row:nth-child(3) {
+            background: rgba(205, 127, 50, .07);
+            color: #cd7f32
+        }
+
+        #nameInput {
+            background: rgba(255, 255, 255, .08);
+            border: 1px solid rgba(255, 255, 255, .15);
+            color: #fff;
+            padding: 9px;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 100%;
+            margin: 8px 0;
+            text-align: center
+        }
+
+        .accuracy-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, .08);
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow: hidden
+        }
+
+        .accuracy-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width .3s
+        }
+
+        #countdownOverlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 25;
+            background: rgba(5, 3, 20, .85);
+            backdrop-filter: blur(4px)
+        }
+
+        #countdownText {
+            font-size: 8rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, #ff3cac, #00f0ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: cdPulse .3s ease-out;
+            text-shadow: 0 0 40px rgba(255, 60, 172, .4)
+        }
+
+        @keyframes cdPulse {
+            0% {
+                transform: scale(1.8);
+                opacity: 0
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="countdownOverlay">
+        <div id="countdownText"></div>
+    </div>
+
+    <div id="gameHUD">
+        <div class="hud-g"><span>🏆 <span id="hudScore">0</span></span><span>🔥 <span id="hudCombo">0</span>x</span>
+        </div>
+        <div class="hud-g"><span>🎯 <span id="hudAcc">100</span>%</span><span>⏱ <span id="hudTime">0:00</span></span>
+        </div>
+    </div>
+    <div id="comboDisplay"></div>
+    <div id="hitFeedback"></div>
+    <div id="laneIndicator"></div>
+
+    <!-- MAIN MENU -->
+    <div class="screen" id="menuScreen">
+        <div style="z-index:1;text-align:center">
+            <div class="menu-title">NEON RHYTHM</div>
+            <div class="menu-sub">Feel the beat • Hit the notes • Chase the high score</div>
+            <button class="btn btn-play" onclick="showScreen('songSelectScreen')">▶ PLAY</button><br>
+            <button class="btn btn-sec" onclick="showScreen('settingsScreen')">⚙ Settings</button><br>
+            <button class="btn btn-sec" onclick="showScreen('controlsScreen')">🎮 Controls</button><br>
+            <button class="btn btn-sec" onclick="showLB()">🏆 Leaderboard</button>
+        </div>
+    </div>
+
+    <!-- SONG SELECT -->
+    <div class="screen hidden" id="songSelectScreen">
+        <div class="panel">
+            <h2>🎵 Select a Song</h2>
+            <div class="diff-btns" id="diffBtns">
+                <button onclick="setDiff('easy',this)">Easy</button>
+                <button class="active" onclick="setDiff('normal',this)">Medium</button>
+                <button onclick="setDiff('hard',this)">Hard</button>
+                <button onclick="setDiff('expert',this)">Expert</button>
+            </div>
+            <div class="song-list" id="songList"></div>
+            <br><button class="btn btn-sec" onclick="hideScreen('songSelectScreen')">← Back</button>
+        </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="screen hidden" id="settingsScreen">
+        <div class="panel">
+            <h2>⚙ Settings</h2>
+            <label>SFX Volume <input type="range" id="sfxVol" min="0" max="100" value="70"
+                    onchange="CFG.sfxVol=this.value/100"></label>
+            <label>Music Volume <input type="range" id="musVol" min="0" max="100" value="80"
+                    onchange="CFG.musVol=this.value/100"></label>
+            <label>Note Speed <select id="noteSpd" onchange="CFG.noteSpeed=+this.value">
+                    <option value="0.7">Slow</option>
+                    <option value="1" selected>Normal</option>
+                    <option value="1.4">Fast</option>
+                    <option value="1.8">Hyper</option>
+                </select></label>
+            <label>Graphics <select id="gfxSel" onchange="CFG.gfx=this.value">
+                    <option value="high">High</option>
+                    <option value="low">Low</option>
+                </select></label>
+            <h3 style="margin-top:16px;font-size:1rem;color:#889">Key Bindings (4 lanes)</h3>
+            <label>Lane 1 <input type="text" id="kb0" value="D" maxlength="1"
+                    onchange="CFG.keys4[0]=this.value.toUpperCase();this.value=this.value.toUpperCase()"></label>
+            <label>Lane 2 <input type="text" id="kb1" value="F" maxlength="1"
+                    onchange="CFG.keys4[1]=this.value.toUpperCase();this.value=this.value.toUpperCase()"></label>
+            <label>Lane 3 <input type="text" id="kb2" value="J" maxlength="1"
+                    onchange="CFG.keys4[2]=this.value.toUpperCase();this.value=this.value.toUpperCase()"></label>
+            <label>Lane 4 <input type="text" id="kb3" value="K" maxlength="1"
+                    onchange="CFG.keys4[3]=this.value.toUpperCase();this.value=this.value.toUpperCase()"></label>
+            <h3 style="margin-top:12px;font-size:1rem;color:#889">Key Bindings (5 lanes — Expert)</h3>
+            <label>Lane 1 <input type="text" id="kb5_0" value="D" maxlength="1"
+                    onchange="CFG.keys5[0]=this.value.toUpperCase();this.value=this.value.toUpperCase()"></label>
+            <label>Lane 2 <input type="text" id="kb5_1" value="F" maxlength="1"
+                    onchange="CFG.keys5[1]=this.value.toUpperCase();this.value=this.value.toUpperCase()"></label>
+            <label>Lane 3 <input type="text" id="kb5_2" value="J" maxlength="1"
+                    onchange="CFG.keys5[2]=this.value.toUpperCase();this.value=this.value.toUpperCase()"></label>
+            <label>Lane 4 <input type="text" id="kb5_3" value="K" maxlength="1"
+                    onchange="CFG.keys5[3]=this.value.toUpperCase();this.value=this.value.toUpperCase()"></label>
+            <label>Lane 5 <input type="text" id="kb5_4" value="L" maxlength="1"
+                    onchange="CFG.keys5[4]=this.value.toUpperCase();this.value=this.value.toUpperCase()"></label>
+            <br><button class="btn btn-sec" onclick="hideScreen('settingsScreen')">← Back</button>
+        </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="screen hidden" id="controlsScreen">
+        <div class="panel">
+            <h2>🎮 Controls</h2>
+            <div class="key-grid">
+                <div class="key-item"><span>Lane Keys</span><span>D F J K</span></div>
+                <div class="key-item"><span>Expert Keys</span><span>D F J K L</span></div>
+                <div class="key-item"><span>Pause</span><span>ESC</span></div>
+            </div>
+            <p style="margin-top:14px;font-size:.82rem;color:#778">Hit the keys when notes reach the strike line at the
+                bottom. Timing matters — aim for PERFECT hits! Customize keys in Settings.</p>
+            <br><button class="btn btn-sec" onclick="hideScreen('controlsScreen')">← Back</button>
+        </div>
+    </div>
+
+    <!-- PAUSE -->
+    <div class="screen hidden" id="pauseScreen">
+        <div class="panel" style="text-align:center">
+            <h2>⏸ Paused</h2>
+            <button class="btn btn-play" onclick="resumeGame()">▶ Resume</button><br>
+            <button class="btn btn-sec" onclick="restartSong()">🔄 Restart</button><br>
+            <button class="btn btn-sec" onclick="quitToMenu()">🚪 Quit</button>
+        </div>
+    </div>
+
+    <!-- GAME OVER / RESULTS -->
+    <div class="screen hidden" id="resultsScreen">
+        <div class="panel" style="text-align:center">
+            <h2>🎶 Song Complete!</h2>
+            <div id="rankDisplay" style="font-size:3rem;margin:6px 0"></div>
+            <div class="go-stats">
+                <div class="go-stat">
+                    <div class="val" id="resScore">0</div>
+                    <div class="lbl">SCORE</div>
+                </div>
+                <div class="go-stat">
+                    <div class="val" id="resCombo">0</div>
+                    <div class="lbl">MAX COMBO</div>
+                </div>
+                <div class="go-stat">
+                    <div class="val" id="resPerfect">0</div>
+                    <div class="lbl">PERFECT</div>
+                </div>
+                <div class="go-stat">
+                    <div class="val" id="resGreat">0</div>
+                    <div class="lbl">GREAT</div>
+                </div>
+                <div class="go-stat">
+                    <div class="val" id="resGood">0</div>
+                    <div class="lbl">GOOD</div>
+                </div>
+                <div class="go-stat">
+                    <div class="val" id="resMiss">0</div>
+                    <div class="lbl">MISS</div>
+                </div>
+            </div>
+            <div class="accuracy-bar">
+                <div class="accuracy-fill" id="accBar"
+                    style="width:100%;background:linear-gradient(90deg,#ff3cac,#00f0ff)"></div>
+            </div>
+            <p style="font-size:.85rem;color:#889">Accuracy: <span id="resAcc">100</span>%</p>
+            <input id="nameInput" placeholder="Enter name..." maxlength="12" value="Player">
+            <button class="btn btn-play" onclick="saveAndRetry()">Save & Retry</button><br>
+            <button class="btn btn-sec" onclick="saveAndBack()">Save & Song Select</button>
+        </div>
+    </div>
+
+    <!-- LEADERBOARD -->
+    <div class="screen hidden" id="leaderboardScreen">
+        <div class="panel">
+            <h2>🏆 Leaderboard</h2>
+            <div class="lb-list" id="lbList"></div>
+            <br><button class="btn btn-sec" onclick="hideScreen('leaderboardScreen')">← Back</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // ===== CONFIG =====
+        const CFG = { sfxVol: .7, musVol: .8, noteSpeed: 1, gfx: 'high', keys4: ['D', 'F', 'J', 'K'], keys5: ['D', 'F', 'J', 'K', 'L'], difficulty: 'normal' };
+        const LANE_COLORS = ['#ff3cac', '#f7d452', '#00f0ff', '#8b5cf6', '#22c55e'];
+
+        // ===== SCREENS =====
+        function showScreen(id) { document.getElementById(id).classList.remove('hidden') }
+        function hideScreen(id) { document.getElementById(id).classList.add('hidden') }
+
+        // ===== AUDIO ENGINE =====
+        let actx;
+        function initAudio() { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)() }
+        function playNote(freq, dur, type = 'square', vol = .1, delay = 0) {
+            if (!actx) return; const t = actx.currentTime + delay;
+            const o = actx.createOscillator(), g = actx.createGain();
+            o.type = type; o.frequency.setValueAtTime(freq, t);
+            g.gain.setValueAtTime(vol * CFG.musVol, t);
+            g.gain.exponentialRampToValueAtTime(.001, t + dur);
+            o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur);
+        }
+        function sfxHit(good) {
+            if (!actx) return; const v = .12 * CFG.sfxVol;
+            if (good) { playNote(880, .05, 'sine', v); playNote(1100, .06, 'sine', v * .7) }
+            else { playNote(150, .15, 'sawtooth', v) }
+        }
+
+        // ===== SONGS (Web Audio Synthesized) =====
+        // Each song: title, genre, bpm, duration(s), melody data, note chart generator
+        const SONGS = [
+            {
+                id: 'neon_drive', title: 'Neon Drive', genre: 'Synthwave', bpm: 128, dur: 60,
+                color: '#ff3cac',
+                play: function (t) {
+                    const bpm = 128, bt = 60 / bpm;
+                    // Bass line
+                    const bass = [65, 65, 82, 98, 65, 65, 82, 73];
+                    for (let i = 0; i < Math.floor(t / bt) && i < bass.length * (Math.floor(t / (bt * 8)) + 1); i++) {
+                        const n = bass[i % bass.length];
+                        playNote(n, bt * .8, 'sawtooth', .08, i * bt - t > 0 ? i * bt - t : 0);
+                    }
+                    // Lead synth
+                    const lead = [523, 587, 659, 523, 784, 659, 587, 523, 659, 784, 880, 784, 659, 587, 523, 494];
+                    for (let i = 0; i < lead.length * 2; i++) {
+                        const delay = i * bt * 2 - t; if (delay < 0 || delay > 4) continue;
+                        playNote(lead[i % lead.length], bt * 1.5, 'square', .04, delay);
+                    }
+                },
+                chart: function (diff) {
+                    const bpm = 128, bt = 60 / bpm, notes = [], lanes = diff === 'expert' ? 5 : 4;
+                    const density = diff === 'easy' ? .25 : diff === 'normal' ? .5 : diff === 'hard' ? .75 : 1;
+                    for (let i = 0; i < 60 / bt; i++) {
+                        if (Math.random() > density) continue;
+                        const time = i * bt;
+                        const lane = Math.floor(Math.random() * lanes);
+                        notes.push({ time, lane });
+                        // Doubles on hard+
+                        if ((diff === 'hard' || diff === 'expert') && Math.random() < .2) {
+                            let l2; do { l2 = Math.floor(Math.random() * lanes) } while (l2 === lane);
+                            notes.push({ time, lane: l2 });
+                        }
+                    }
+                    return notes.sort((a, b) => a.time - b.time);
+                }
+            },
+            {
+                id: 'digital_sunset', title: 'Digital Sunset', genre: 'Chillwave', bpm: 100, dur: 65,
+                color: '#f7d452',
+                play: function (t) {
+                    const bt = 60 / 100;
+                    const chords = [[261, 329, 392], [293, 369, 440], [329, 415, 494], [261, 329, 392]];
+                    for (let i = 0; i < chords.length * 4; i++) {
+                        const delay = i * bt * 4 - t; if (delay < 0 || delay > 5) continue;
+                        chords[i % chords.length].forEach(f => playNote(f, bt * 3, 'sine', .025, delay));
+                    }
+                    const mel = [659, 784, 880, 784, 659, 587, 523, 587, 659, 523, 494, 523];
+                    for (let i = 0; i < mel.length * 3; i++) {
+                        const delay = i * bt * 2 - t; if (delay < 0 || delay > 4) continue;
+                        playNote(mel[i % mel.length], bt * 1.8, 'triangle', .035, delay);
+                    }
+                },
+                chart: function (diff) {
+                    const bt = 60 / 100, notes = [], lanes = diff === 'expert' ? 5 : 4;
+                    const density = diff === 'easy' ? .2 : diff === 'normal' ? .4 : diff === 'hard' ? .65 : .85;
+                    for (let i = 0; i < 65 / bt; i++) {
+                        if (Math.random() > density) continue;
+                        notes.push({ time: i * bt, lane: Math.floor(Math.random() * lanes) });
+                        if (diff !== 'easy' && Math.random() < .15 && i * bt > 2) {
+                            notes.push({ time: i * bt + bt * .5, lane: Math.floor(Math.random() * lanes) });
+                        }
+                    }
+                    return notes.sort((a, b) => a.time - b.time);
+                }
+            },
+            {
+                id: 'void_breaker', title: 'Void Breaker', genre: 'Drum & Bass', bpm: 174, dur: 55,
+                color: '#00f0ff',
+                play: function (t) {
+                    const bt = 60 / 174;
+                    // Aggressive bass
+                    const bass = [55, 55, 73, 55, 65, 55, 82, 73];
+                    for (let i = 0; i < bass.length * 8; i++) {
+                        const delay = i * bt - t; if (delay < 0 || delay > 3) continue;
+                        playNote(bass[i % bass.length], bt * .6, 'sawtooth', .07, delay);
+                    }
+                    // Stab synth
+                    const stabs = [440, 0, 523, 0, 440, 587, 0, 523];
+                    for (let i = 0; i < stabs.length * 6; i++) {
+                        const delay = i * bt * 2 - t; if (delay < 0 || delay > 4) continue;
+                        if (stabs[i % stabs.length]) playNote(stabs[i % stabs.length], bt, 'square', .03, delay);
+                    }
+                },
+                chart: function (diff) {
+                    const bt = 60 / 174, notes = [], lanes = diff === 'expert' ? 5 : 4;
+                    const density = diff === 'easy' ? .2 : diff === 'normal' ? .45 : diff === 'hard' ? .7 : .9;
+                    for (let i = 0; i < 55 / bt; i++) {
+                        if (Math.random() > density) continue;
+                        notes.push({ time: i * bt, lane: Math.floor(Math.random() * lanes) });
+                        if (diff === 'expert' && Math.random() < .3) {
+                            let l2; do { l2 = Math.floor(Math.random() * lanes) } while (l2 === notes[notes.length - 1].lane);
+                            notes.push({ time: i * bt, lane: l2 });
+                        }
+                    }
+                    return notes.sort((a, b) => a.time - b.time);
+                }
+            },
+            {
+                id: 'pixel_funk', title: 'Pixel Funk', genre: 'Funk / Pop', bpm: 115, dur: 60,
+                color: '#8b5cf6',
+                play: function (t) {
+                    const bt = 60 / 115;
+                    // Funky bass line
+                    const bass = [98, 110, 131, 98, 147, 131, 110, 98];
+                    for (let i = 0; i < bass.length * 6; i++) {
+                        const delay = i * bt - t; if (delay < 0 || delay > 4) continue;
+                        playNote(bass[i % bass.length], bt * .7, 'triangle', .07, delay);
+                    }
+                    // Rhythm chords
+                    const ch = [[330, 415, 494], [370, 466, 554], [294, 370, 440], [330, 415, 494]];
+                    for (let i = 0; i < ch.length * 6; i++) {
+                        const delay = i * bt * 2 - t; if (delay < 0 || delay > 5) continue;
+                        if (i % 2 === 0) ch[i % ch.length].forEach(f => playNote(f, bt * .4, 'square', .02, delay));
+                        else ch[i % ch.length].forEach(f => playNote(f, bt * .3, 'square', .015, delay + bt * .5));
+                    }
+                },
+                chart: function (diff) {
+                    const bt = 60 / 115, notes = [], lanes = diff === 'expert' ? 5 : 4;
+                    const density = diff === 'easy' ? .22 : diff === 'normal' ? .45 : diff === 'hard' ? .68 : .88;
+                    // Funk has offbeat patterns
+                    for (let i = 0; i < 60 / bt; i++) {
+                        if (Math.random() > density) continue;
+                        const time = i * bt + (Math.random() < .3 ? bt * .5 : 0);
+                        notes.push({ time, lane: Math.floor(Math.random() * lanes) });
+                    }
+                    return notes.sort((a, b) => a.time - b.time);
+                }
+            },
+            {
+                id: 'hypernova', title: 'Hypernova', genre: 'Hardcore Electronic', bpm: 160, dur: 50,
+                color: '#22c55e',
+                play: function (t) {
+                    const bt = 60 / 160;
+                    const bass = [55, 55, 65, 55, 73, 55, 82, 55, 55, 65, 73, 82, 98, 82, 73, 65];
+                    for (let i = 0; i < bass.length * 4; i++) {
+                        const delay = i * bt - t; if (delay < 0 || delay > 3) continue;
+                        playNote(bass[i % bass.length], bt * .5, 'sawtooth', .08, delay);
+                    }
+                    const lead = [880, 1047, 880, 784, 659, 784, 880, 1047, 1175, 1047, 880, 784, 659, 587, 523, 659];
+                    for (let i = 0; i < lead.length * 3; i++) {
+                        const delay = i * bt - t; if (delay < 0 || delay > 3) continue;
+                        playNote(lead[i % lead.length], bt * .8, 'square', .025, delay);
+                    }
+                },
+                chart: function (diff) {
+                    const bt = 60 / 160, notes = [], lanes = diff === 'expert' ? 5 : 4;
+                    const density = diff === 'easy' ? .18 : diff === 'normal' ? .4 : diff === 'hard' ? .65 : .92;
+                    for (let i = 0; i < 50 / bt; i++) {
+                        if (Math.random() > density) continue;
+                        notes.push({ time: i * bt, lane: Math.floor(Math.random() * lanes) });
+                        if ((diff === 'hard' || diff === 'expert') && Math.random() < .25) {
+                            let l2; do { l2 = Math.floor(Math.random() * lanes) } while (l2 === notes[notes.length - 1].lane);
+                            notes.push({ time: i * bt, lane: l2 });
+                        }
+                        if (diff === 'expert' && Math.random() < .1) {
+                            notes.push({ time: i * bt + bt * .5, lane: Math.floor(Math.random() * lanes) });
+                        }
+                    }
+                    return notes.sort((a, b) => a.time - b.time);
+                }
+            }
+        ];
+
+        // ===== SONG SELECT =====
+        let selectedSong = 0;
+        function renderSongList() {
+            const list = document.getElementById('songList');
+            list.innerHTML = '';
+            SONGS.forEach((s, i) => {
+                const card = document.createElement('div');
+                card.className = 'song-card' + (i === selectedSong ? ' selected' : '');
+                card.innerHTML = `<div><div class="s-title" style="color:${s.color}">${s.title}</div><div class="s-genre">${s.genre}</div></div><div class="s-bpm">${s.bpm} BPM</div>`;
+                card.onclick = () => { selectedSong = i; renderSongList() };
+                card.ondblclick = () => { selectedSong = i; playSong() };
+                list.appendChild(card);
+            });
+            const playBtn = document.createElement('button');
+            playBtn.className = 'btn btn-play'; playBtn.style.marginTop = '12px'; playBtn.style.width = '100%';
+            playBtn.textContent = '▶ Play Selected'; playBtn.onclick = playSong;
+            list.appendChild(playBtn);
+        }
+        function setDiff(d, btn) {
+            CFG.difficulty = d;
+            document.querySelectorAll('.diff-btns button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+        renderSongList();
+
+        // ===== THREE.JS SETUP =====
+        const canvas = document.getElementById('gameCanvas');
+        let scene, camera, renderer;
+        let highway, strikeLine, noteMeshes = [], laneGlows = [];
+        let running = false, paused = false;
+        let songTime = 0, currentChart = [], noteIdx = 0;
+        let score = 0, combo = 0, maxCombo = 0, totalHits = 0, totalNotes = 0;
+        let hits = { perfect: 0, great: 0, good: 0, miss: 0 };
+        let musicInterval;
+        let songStartRealTime = 0, pauseAccum = 0, pauseStartTime = 0;
+        let lastMusicSchedule = -Infinity;
+
+        function initThree() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x050008, .008);
+            camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, .1, 200);
+            camera.position.set(0, 6, 8); camera.lookAt(0, 0, -15);
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: CFG.gfx === 'high' });
+            renderer.setSize(innerWidth, innerHeight);
+            renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+            renderer.setClearColor(0x050008);
+
+            const amb = new THREE.AmbientLight(0x221133, .5); scene.add(amb);
+            const dl = new THREE.DirectionalLight(0x8855cc, .5); dl.position.set(0, 10, 5); scene.add(dl);
+
+            addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight) });
+        }
+
+        function buildHighway(lanes) {
+            // Clear old
+            if (highway) scene.remove(highway);
+            laneGlows.forEach(g => scene.remove(g)); laneGlows = [];
+            highway = new THREE.Group();
+            const W = lanes * 1.6, L = 80;
+
+            // Highway surface
+            const hGeo = new THREE.PlaneGeometry(W, L, lanes, 40);
+            const hMat = new THREE.MeshStandardMaterial({ color: 0x0a0a1a, transparent: true, opacity: .85, side: THREE.DoubleSide });
+            const hMesh = new THREE.Mesh(hGeo, hMat);
+            hMesh.rotation.x = -Math.PI / 2; hMesh.position.set(0, 0, -L / 2 + 5);
+            highway.add(hMesh);
+
+            // Lane dividers
+            for (let i = 0; i <= lanes; i++) {
+                const x = -W / 2 + i * (W / lanes);
+                const lGeo = new THREE.PlaneGeometry(.04, L);
+                const lMat = new THREE.MeshBasicMaterial({ color: 0x333355, transparent: true, opacity: .4, side: THREE.DoubleSide });
+                const lMesh = new THREE.Mesh(lGeo, lMat);
+                lMesh.rotation.x = -Math.PI / 2; lMesh.position.set(x, .01, -L / 2 + 5);
+                highway.add(lMesh);
+            }
+
+            // Side rails
+            for (let s = -1; s <= 1; s += 2) {
+                const rGeo = new THREE.BoxGeometry(.1, .3, L);
+                const rMat = new THREE.MeshBasicMaterial({ color: 0x8b5cf6, transparent: true, opacity: .3 });
+                const rail = new THREE.Mesh(rGeo, rMat);
+                rail.position.set(s * W / 2, .15, -L / 2 + 5); highway.add(rail);
+            }
+
+            // Strike line
+            const slGeo = new THREE.PlaneGeometry(W, .15);
+            const slMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .8, side: THREE.DoubleSide });
+            strikeLine = new THREE.Mesh(slGeo, slMat);
+            strikeLine.rotation.x = -Math.PI / 2; strikeLine.position.set(0, .02, 0);
+            highway.add(strikeLine);
+
+            // Lane target glows
+            for (let i = 0; i < lanes; i++) {
+                const x = -W / 2 + (i + .5) * (W / lanes);
+                const gGeo = new THREE.CircleGeometry(.5, 16);
+                const col = new THREE.Color(LANE_COLORS[i % LANE_COLORS.length]);
+                const gMat = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .15, side: THREE.DoubleSide });
+                const glow = new THREE.Mesh(gGeo, gMat);
+                glow.rotation.x = -Math.PI / 2; glow.position.set(x, .02, 0);
+                highway.add(glow); laneGlows.push(glow);
+            }
+
+            // Background grid lines
+            for (let z = 0; z < L; z += 2) {
+                const lgeo = new THREE.PlaneGeometry(W, .02);
+                const lmat = new THREE.MeshBasicMaterial({ color: 0x222244, transparent: true, opacity: .2, side: THREE.DoubleSide });
+                const lm = new THREE.Mesh(lgeo, lmat);
+                lm.rotation.x = -Math.PI / 2; lm.position.set(0, .015, -z + 5);
+                highway.add(lm);
+            }
+
+            scene.add(highway);
+
+            // Background pillars
+            for (let i = 0; i < 20; i++) {
+                const pGeo = new THREE.BoxGeometry(.2, .2 + Math.random() * 8, .2);
+                const pMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(`hsl(${Math.random() * 60 + 260},70%,20%)`), transparent: true, opacity: .3 });
+                const p = new THREE.Mesh(pGeo, pMat);
+                const side = i % 2 === 0 ? -1 : 1;
+                p.position.set(side * (W / 2 + 1 + Math.random() * 3), pGeo.parameters.height / 2, -Math.random() * L + 5);
+                scene.add(p); highway.add(p);
+            }
+        }
+
+        function getLaneX(lane, lanes) {
+            const W = lanes * 1.6;
+            return -W / 2 + (lane + .5) * (W / lanes);
+        }
+
+        function spawnNoteMesh(lane, lanes) {
+            const geo = new THREE.BoxGeometry(1.2, .3, .6);
+            const col = new THREE.Color(LANE_COLORS[lane % LANE_COLORS.length]);
+            const mat = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: .5, metalness: .7, roughness: .3 });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(getLaneX(lane, lanes), .2, -70);
+            // Glow child
+            const gGeo = new THREE.BoxGeometry(1.4, .1, .8);
+            const gMat = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .2 });
+            mesh.add(new THREE.Mesh(gGeo, gMat));
+            scene.add(mesh);
+            return mesh;
+        }
+
+        // ===== KEY INPUT =====
+        const keysDown = {};
+        addEventListener('keydown', e => {
+            if (e.code === 'Escape') {
+                if (running && !paused) pauseGame(); else if (paused) resumeGame();
+                return;
+            }
+            if (!running || paused) return;
+            const k = e.key.toUpperCase();
+            if (keysDown[k]) return;
+            keysDown[k] = true;
+            checkHit(k);
+        });
+        addEventListener('keyup', e => { keysDown[e.key.toUpperCase()] = false });
+
+        function getActiveKeys() { return CFG.difficulty === 'expert' ? CFG.keys5 : CFG.keys4 }
+        function getLanes() { return CFG.difficulty === 'expert' ? 5 : 4 }
+
+        function checkHit(key) {
+            const ak = getActiveKeys();
+            const laneIdx = ak.indexOf(key);
+            if (laneIdx === -1) return;
+
+            // Visual press
+            const indicators = document.querySelectorAll('.lane-key');
+            if (indicators[laneIdx]) { indicators[laneIdx].classList.add('pressed'); setTimeout(() => indicators[laneIdx].classList.remove('pressed'), 120) }
+            if (laneGlows[laneIdx]) { laneGlows[laneIdx].material.opacity = .5; setTimeout(() => { if (laneGlows[laneIdx]) laneGlows[laneIdx].material.opacity = .15 }, 100) }
+
+            // Find closest note in this lane
+            let best = null, bestDist = Infinity, bestIdx = -1;
+            for (let i = 0; i < noteMeshes.length; i++) {
+                const nm = noteMeshes[i];
+                if (nm.userData.lane !== laneIdx || nm.userData.hit) continue;
+                const dist = Math.abs(nm.position.z);
+                if (dist < bestDist) { bestDist = dist; best = nm; bestIdx = i }
+            }
+
+            if (!best || bestDist > 3) return;
+
+            best.userData.hit = true;
+            let rating, pts, color;
+            if (bestDist < .6) { rating = 'PERFECT'; pts = 300; color = '#00f0ff'; hits.perfect++ }
+            else if (bestDist < 1.2) { rating = 'GREAT'; pts = 200; color = '#8b5cf6'; hits.great++ }
+            else { rating = 'GOOD'; pts = 100; color = '#f7d452'; hits.good++ }
+
+            combo++; if (combo > maxCombo) maxCombo = combo;
+            totalHits++;
+            const mult = 1 + Math.floor(combo / 10) * .25;
+            score += Math.floor(pts * mult);
+
+            // Feedback
+            sfxHit(true);
+            showHitFeedback(rating, color);
+            if (combo > 0 && combo % 10 === 0) showCombo();
+
+            // Animate note out
+            const mesh = best;
+            const removeAnim = () => { mesh.scale.multiplyScalar(.85); mesh.material.opacity = (mesh.material.opacity || 1) * .85; if (mesh.scale.x > .05) requestAnimationFrame(removeAnim); else { scene.remove(mesh); noteMeshes.splice(noteMeshes.indexOf(mesh), 1) } };
+            mesh.material.transparent = true; removeAnim();
+        }
+
+        function showHitFeedback(text, color) {
+            const el = document.getElementById('hitFeedback');
+            el.textContent = text; el.style.color = color; el.style.opacity = '1';
+            setTimeout(() => el.style.opacity = '0', 350);
+        }
+        function showCombo() {
+            const el = document.getElementById('comboDisplay');
+            el.textContent = combo + 'x COMBO!'; el.style.color = combo >= 50 ? '#ff3cac' : combo >= 20 ? '#00f0ff' : '#f7d452';
+            el.style.opacity = '1'; el.style.transform = 'translate(-50%,-50%) scale(1.2)';
+            setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translate(-50%,-50%) scale(1)' }, 600);
+        }
+
+        // ===== COUNTDOWN =====
+        function showCountdown(callback) {
+            const overlay = document.getElementById('countdownOverlay');
+            const text = document.getElementById('countdownText');
+            overlay.style.display = 'flex';
+            const steps = ['3', '2', '1', 'GO!'];
+            let i = 0;
+            function next() {
+                if (i >= steps.length) {
+                    overlay.style.display = 'none';
+                    callback();
+                    return;
+                }
+                text.textContent = steps[i];
+                // Re-trigger animation
+                text.style.animation = 'none';
+                void text.offsetWidth;
+                text.style.animation = 'cdPulse .3s ease-out';
+                // Countdown beep
+                if (i < 3) tone(660, .1, 'sine', .15 * CFG.sfxVol);
+                else tone(880, .15, 'sine', .2 * CFG.sfxVol);
+                i++;
+                setTimeout(next, 800);
+            }
+            next();
+        }
+
+        function tone(f, d, t, v) {
+            if (!actx) return;
+            const o = actx.createOscillator(), g = actx.createGain();
+            o.type = t; o.frequency.value = f;
+            g.gain.setValueAtTime(v, actx.currentTime);
+            g.gain.exponentialRampToValueAtTime(.001, actx.currentTime + d);
+            o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime + d);
+        }
+
+        // ===== GAME FLOW =====
+        function playSong() {
+            initAudio(); if (!renderer) initThree();
+            hideScreen('songSelectScreen'); hideScreen('menuScreen');
+            const song = SONGS[selectedSong];
+            const lanes = getLanes();
+            buildHighway(lanes);
+            currentChart = song.chart(CFG.difficulty);
+            noteIdx = 0; songTime = 0; score = 0; combo = 0; maxCombo = 0; totalHits = 0; totalNotes = currentChart.length;
+            hits = { perfect: 0, great: 0, good: 0, miss: 0 };
+            noteMeshes.forEach(n => scene.remove(n)); noteMeshes = [];
+            paused = false; running = false;
+
+            // HUD
+            document.getElementById('gameHUD').style.display = 'flex';
+            const li = document.getElementById('laneIndicator'); li.style.display = 'flex';
+            const ak = getActiveKeys();
+            li.innerHTML = ak.map((k, i) => `<div class="lane-key" style="border-color:${LANE_COLORS[i]};color:${LANE_COLORS[i]}">${k}</div>`).join('');
+
+            // Render scene during countdown
+            renderer.render(scene, camera);
+
+            // Countdown then start
+            showCountdown(() => {
+                running = true;
+                songStartRealTime = performance.now();
+                pauseAccum = 0;
+                lastMusicSchedule = -Infinity;
+                // Start music
+                if (musicInterval) clearInterval(musicInterval);
+                scheduleMusicChunk(song, 0);
+                musicInterval = setInterval(() => {
+                    if (running && !paused) scheduleMusicChunk(song, songTime);
+                }, 2500);
+                requestAnimationFrame(animate);
+            });
+        }
+
+        function scheduleMusicChunk(song, t) {
+            // Prevent double-scheduling same region
+            if (t - lastMusicSchedule < 2) return;
+            lastMusicSchedule = t;
+            song.play(t);
+        }
+
+        function animate() {
+            if (!running) return;
+            requestAnimationFrame(animate);
+            if (paused) {
+                renderer.render(scene, camera);
+                return;
+            }
+
+            // Anchor songTime to real clock to prevent drift
+            songTime = (performance.now() - songStartRealTime - pauseAccum) / 1000;
+
+            const song = SONGS[selectedSong];
+            const lanes = getLanes();
+            const spd = 18 * CFG.noteSpeed;
+            const dt = 1 / 60; // for animations only
+
+            // Spawn notes
+            while (noteIdx < currentChart.length && currentChart[noteIdx].time <= songTime + 70 / spd) {
+                const n = currentChart[noteIdx];
+                const mesh = spawnNoteMesh(n.lane, lanes);
+                mesh.userData = { lane: n.lane, time: n.time, hit: false };
+                mesh.position.z = -(n.time - songTime) * spd;
+                noteMeshes.push(mesh); noteIdx++;
+            }
+
+            // Move notes
+            for (let i = noteMeshes.length - 1; i >= 0; i--) {
+                const nm = noteMeshes[i];
+                if (nm.userData.hit) continue;
+                nm.position.z = (songTime - nm.userData.time) * spd;
+                nm.rotation.y += dt;
+
+                // Miss
+                if (nm.position.z > 4) {
+                    hits.miss++; combo = 0;
+                    showHitFeedback('MISS', '#ef4444'); sfxHit(false);
+                    scene.remove(nm); noteMeshes.splice(i, 1);
+                }
+            }
+
+            // Pulse strike line
+            strikeLine.material.opacity = .5 + Math.sin(songTime * 8) * .3;
+
+            // Camera subtle motion
+            camera.position.x = Math.sin(songTime * .3) * .3;
+            camera.rotation.z = Math.sin(songTime * .5) * .01;
+
+            // HUD
+            document.getElementById('hudScore').textContent = score;
+            document.getElementById('hudCombo').textContent = combo;
+            const acc = totalHits + hits.miss > 0 ? Math.round(totalHits / (totalHits + hits.miss) * 100) : 100;
+            document.getElementById('hudAcc').textContent = acc;
+            const mins = Math.floor(songTime / 60), secs = Math.floor(songTime % 60);
+            document.getElementById('hudTime').textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+            renderer.render(scene, camera);
+
+            // Song end — only after all chart notes have been spawned AND cleared
+            const lastNoteTime = currentChart.length > 0 ? currentChart[currentChart.length - 1].time : 0;
+            const songFinished = songTime >= Math.max(song.dur, lastNoteTime + 2);
+            if (songFinished && noteMeshes.length === 0 && noteIdx >= currentChart.length) endSong();
+        }
+
+        function pauseGame() {
+            paused = true;
+            pauseStartTime = performance.now();
+            showScreen('pauseScreen');
+        }
+        function resumeGame() {
+            pauseAccum += performance.now() - pauseStartTime;
+            paused = false;
+            hideScreen('pauseScreen');
+        }
+        function restartSong() { running = false; if (musicInterval) clearInterval(musicInterval); hideScreen('pauseScreen'); playSong() }
+        function quitToMenu() {
+            running = false; if (musicInterval) clearInterval(musicInterval);
+            hideScreen('pauseScreen'); document.getElementById('gameHUD').style.display = 'none';
+            document.getElementById('laneIndicator').style.display = 'none'; showScreen('menuScreen');
+        }
+
+        function endSong() {
+            running = false; if (musicInterval) clearInterval(musicInterval);
+            const acc = totalHits + hits.miss > 0 ? Math.round(totalHits / (totalHits + hits.miss) * 100) : 100;
+            let rank = 'F';
+            if (acc >= 98 && hits.miss === 0) rank = 'S+'; else if (acc >= 95) rank = 'S'; else if (acc >= 90) rank = 'A'; else if (acc >= 80) rank = 'B'; else if (acc >= 70) rank = 'C'; else if (acc >= 60) rank = 'D';
+            const rankColors = { 'S+': '#ff3cac', S: '#f7d452', A: '#00f0ff', B: '#8b5cf6', C: '#22c55e', D: '#889', F: '#ef4444' };
+            document.getElementById('rankDisplay').textContent = rank;
+            document.getElementById('rankDisplay').style.color = rankColors[rank] || '#fff';
+            document.getElementById('resScore').textContent = score;
+            document.getElementById('resCombo').textContent = maxCombo;
+            document.getElementById('resPerfect').textContent = hits.perfect;
+            document.getElementById('resGreat').textContent = hits.great;
+            document.getElementById('resGood').textContent = hits.good;
+            document.getElementById('resMiss').textContent = hits.miss;
+            document.getElementById('resAcc').textContent = acc;
+            document.getElementById('accBar').style.width = acc + '%';
+            document.getElementById('gameHUD').style.display = 'none';
+            document.getElementById('laneIndicator').style.display = 'none';
+            showScreen('resultsScreen');
+        }
+
+        function saveScore(name) {
+            const lb = JSON.parse(localStorage.getItem('nr_lb') || '[]');
+            const song = SONGS[selectedSong];
+            const acc = totalHits + hits.miss > 0 ? Math.round(totalHits / (totalHits + hits.miss) * 100) : 100;
+            lb.push({ name: name || 'Player', score, song: song.title, diff: CFG.difficulty, acc, combo: maxCombo, date: new Date().toLocaleDateString() });
+            lb.sort((a, b) => b.score - a.score); if (lb.length > 15) lb.length = 15;
+            localStorage.setItem('nr_lb', JSON.stringify(lb));
+        }
+        function saveAndRetry() { saveScore(document.getElementById('nameInput').value.trim()); hideScreen('resultsScreen'); playSong() }
+        function saveAndBack() { saveScore(document.getElementById('nameInput').value.trim()); hideScreen('resultsScreen'); showScreen('songSelectScreen'); renderSongList() }
+        function showLB() {
+            const lb = JSON.parse(localStorage.getItem('nr_lb') || '[]');
+            document.getElementById('lbList').innerHTML = lb.length ? lb.map((e, i) => `<div class="lb-row"><span>${i + 1}. ${e.name} — ${e.song} (${e.diff})</span><span>${e.score}</span></div>`).join('') : '<p style="color:#778;text-align:center">No scores yet!</p>';
+            showScreen('leaderboardScreen');
+        }
+    </script>
+</body>
+
+</html>

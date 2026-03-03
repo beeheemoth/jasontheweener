@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>JasontheWeener | AI Game Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --panel: #111827;
+      --panel2: #1a1f2e;
+      --accent: #8b5cf6;
+      --accent2: #22d3ee;
+      --green: #22c55e;
+      --pink: #ff3cac;
+      --gold: #f7d452;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --dim: #6b7280;
+      --card-hover: rgba(139, 92, 246, 0.12);
+      --sidebar-w: 260px;
+      --radius: 14px;
+    }
+
+    [data-theme="light"] {
+      --bg: #f3f4f6;
+      --panel: #e5e7eb;
+      --panel2: #d1d5db;
+      --text: #111827;
+      --muted: #6b7280;
+      --dim: #9ca3af;
+      --card-hover: rgba(139, 92, 246, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', system-ui, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      transition: background .3s, color .3s;
+    }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--panel);
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid rgba(255, 255, 255, .05);
+      position: relative;
+      z-index: 10;
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .sidebar-logo img {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      object-fit: cover;
+    }
+
+    .sidebar-logo-text {
+      font-size: 1.15rem;
+      font-weight: 900;
+      background: linear-gradient(90deg, var(--green), var(--accent2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .sidebar-tagline {
+      font-size: .68rem;
+      color: var(--dim);
+      margin-bottom: 20px;
+      padding-left: 52px;
+      margin-top: -2px;
+    }
+
+    .nav {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .nav-btn {
+      width: 100%;
+      background: none;
+      border: none;
+      color: var(--muted);
+      padding: 11px 14px;
+      border-radius: 10px;
+      text-align: left;
+      cursor: pointer;
+      transition: .2s;
+      font-size: .9rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-btn:hover {
+      background: var(--card-hover);
+      color: var(--text);
+    }
+
+    .nav-btn.active {
+      background: linear-gradient(135deg, rgba(139, 92, 246, .15), rgba(34, 211, 238, .08));
+      color: var(--text);
+      border-left: 3px solid var(--accent);
+    }
+
+    .nav-btn .badge {
+      margin-left: auto;
+      background: var(--accent);
+      color: #fff;
+      font-size: .65rem;
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+
+    .sidebar-footer {
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, .06);
+    }
+
+    .theme-btn {
+      width: 100%;
+      background: rgba(255, 255, 255, .05);
+      border: 1px solid rgba(255, 255, 255, .08);
+      color: var(--muted);
+      padding: 9px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: .8rem;
+      font-weight: 600;
+      transition: .2s;
+    }
+
+    .theme-btn:hover {
+      background: rgba(255, 255, 255, .1);
+      color: var(--text);
+    }
+
+    /* ===== MAIN ===== */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+
+    .main::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .main::-webkit-scrollbar-thumb {
+      background: rgba(139, 92, 246, .3);
+      border-radius: 3px;
+    }
+
+    .page {
+      display: none;
+      padding: 28px 32px;
+      min-height: 100vh;
+      animation: fadeIn .3s ease;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    /* ===== HOME ===== */
+    .hero {
+      background: linear-gradient(135deg, rgba(139, 92, 246, .12), rgba(34, 211, 238, .08), rgba(255, 60, 172, .06));
+      border: 1px solid rgba(139, 92, 246, .15);
+      border-radius: 18px;
+      padding: 40px 36px;
+      display: flex;
+      align-items: center;
+      gap: 30px;
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(139, 92, 246, .15), transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .hero-img {
+      width: 120px;
+      height: 120px;
+      border-radius: 16px;
+      object-fit: cover;
+      z-index: 1;
+      box-shadow: 0 8px 30px rgba(139, 92, 246, .3);
+      border: 2px solid rgba(139, 92, 246, .3);
+    }
+
+    .hero-content {
+      z-index: 1;
+    }
+
+    .hero h1 {
+      font-size: 2rem;
+      font-weight: 900;
+      margin-bottom: 6px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2), var(--green));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: .95rem;
+      line-height: 1.5;
+      max-width: 460px;
+    }
+
+    .hero-btn {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 10px 24px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-weight: 700;
+      font-size: .9rem;
+      cursor: pointer;
+      transition: .25s;
+      text-decoration: none;
+    }
+
+    .hero-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(139, 92, 246, .4);
+    }
+
+    .stats-row {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      flex: 1;
+      min-width: 130px;
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, .06);
+      border-radius: 12px;
+      padding: 18px 16px;
+      text-align: center;
+    }
+
+    .stat-val {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--accent);
+    }
+
+    .stat-lbl {
+      font-size: .72rem;
+      color: var(--dim);
+      margin-top: 3px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title .see-all {
+      margin-left: auto;
+      font-size: .78rem;
+      color: var(--accent);
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .section-title .see-all:hover {
+      text-decoration: underline;
+    }
+
+    /* ===== GAME GRID ===== */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, .06);
+      border-radius: var(--radius);
+      padding: 0;
+      cursor: pointer;
+      transition: .3s;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 35px rgba(139, 92, 246, .25);
+      border-color: rgba(139, 92, 246, .2);
+    }
+
+    .card-img {
+      width: 100%;
+      height: 130px;
+      object-fit: cover;
+      background: var(--panel2);
+    }
+
+    .card-body {
+      padding: 14px 16px;
+    }
+
+    .card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .card p {
+      color: var(--muted);
+      font-size: .8rem;
+      line-height: 1.4;
+    }
+
+    .card-tags {
+      display: flex;
+      gap: 5px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .card-tag {
+      font-size: .65rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(139, 92, 246, .1);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .card-fav {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, .6);
+      backdrop-filter: blur(4px);
+      border: none;
+      color: #666;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+
+    .card-fav:hover {
+      background: rgba(0, 0, 0, .8);
+      transform: scale(1.1);
+    }
+
+    .card-fav.favorited {
+      color: var(--gold);
+    }
+
+    /* ===== SEARCH ===== */
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, .1);
+      background: var(--panel);
+      color: var(--text);
+      font-size: .9rem;
+      outline: none;
+      transition: .2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, .15);
+    }
+
+    .filter-btns {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 7px 14px;
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 20px;
+      background: transparent;
+      color: var(--muted);
+      font-size: .8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    .filter-btn:hover,
+    .filter-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* ===== VIEWER ===== */
+    .viewer {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, .97);
+      display: none;
+      flex-direction: column;
+      z-index: 100;
+    }
+
+    .viewer-bar {
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      background: var(--panel);
+      gap: 12px;
+    }
+
+    .viewer-bar button {
+      background: var(--accent);
+      border: none;
+      padding: 8px 18px;
+      color: #fff;
+      font-size: .85rem;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    .viewer-bar button:hover {
+      opacity: .85;
+    }
+
+    .viewer-bar span {
+      font-weight: 700;
+      font-size: .95rem;
+    }
+
+    .viewer iframe {
+      flex: 1;
+      border: none;
+    }
+
+    /* ===== EXPERIMENTS ===== */
+    .exp-hero {
+      text-align: center;
+      padding: 40px 20px;
+      margin-bottom: 24px;
+      background: linear-gradient(135deg, rgba(255, 60, 172, .08), rgba(139, 92, 246, .1), rgba(34, 211, 238, .06));
+      border: 1px solid rgba(139, 92, 246, .12);
+      border-radius: 18px;
+    }
+
+    .exp-hero h1 {
+      font-size: 2.2rem;
+      font-weight: 900;
+      background: linear-gradient(90deg, var(--pink), var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .exp-hero p {
+      color: var(--muted);
+      margin-top: 6px;
+      font-size: .9rem;
+    }
+
+    .exp-search-wrap {
+      max-width: 600px;
+      margin: 20px auto 0;
+      display: flex;
+      gap: 8px;
+    }
+
+    .exp-search-wrap input {
+      flex: 1;
+      padding: 14px 18px;
+      border-radius: 12px;
+      border: 1px solid rgba(139, 92, 246, .2);
+      background: var(--panel);
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+      transition: .2s;
+    }
+
+    .exp-search-wrap input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(139, 92, 246, .15);
+    }
+
+    .exp-search-wrap button {
+      padding: 14px 22px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--pink), var(--accent));
+      color: #fff;
+      font-weight: 700;
+      font-size: .95rem;
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    .exp-search-wrap button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(139, 92, 246, .4);
+    }
+
+    .exp-results {
+      max-width: 650px;
+      margin: 24px auto 0;
+    }
+
+    .exp-result-item {
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, .06);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 10px;
+      transition: .2s;
+    }
+
+    .exp-result-item:hover {
+      border-color: rgba(139, 92, 246, .2);
+    }
+
+    .exp-result-item a {
+      color: var(--accent2);
+      font-weight: 700;
+      text-decoration: none;
+      font-size: .95rem;
+    }
+
+    .exp-result-item a:hover {
+      text-decoration: underline;
+    }
+
+    .exp-result-item .url {
+      color: var(--green);
+      font-size: .75rem;
+      margin-top: 2px;
+    }
+
+    .exp-result-item .snippet {
+      color: var(--muted);
+      font-size: .82rem;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+      margin-top: 28px;
+    }
+
+    .tool-card {
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, .06);
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: .25s;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(139, 92, 246, .2);
+      border-color: rgba(139, 92, 246, .15);
+    }
+
+    .tool-card .tool-icon {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+
+    .tool-card h3 {
+      font-size: .95rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .tool-card p {
+      color: var(--muted);
+      font-size: .75rem;
+    }
+
+    /* ===== FAVORITES EMPTY ===== */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .empty-state .icon {
+      font-size: 4rem;
+      margin-bottom: 12px;
+      opacity: .4;
+    }
+
+    .empty-state h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--muted);
+    }
+
+    .empty-state p {
+      color: var(--dim);
+      font-size: .88rem;
+    }
+
+    /* ===== TOOL MODALS ===== */
+    .tool-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 5, 20, .9);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+
+    .tool-modal.open {
+      display: flex;
+    }
+
+    .tool-panel {
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 16px;
+      padding: 28px;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .tool-panel h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .tool-panel .close-btn {
+      margin-top: 16px;
+      padding: 8px 20px;
+      border: 1px solid rgba(255, 255, 255, .1);
+      background: transparent;
+      color: var(--muted);
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .color-preview {
+      width: 100%;
+      height: 80px;
+      border-radius: 10px;
+      margin: 12px 0;
+      transition: .3s;
+    }
+
+    .color-input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, .1);
+      background: var(--panel2);
+      color: var(--text);
+      font-size: 1.1rem;
+      text-align: center;
+      font-family: monospace;
+    }
+
+    .timer-display {
+      font-size: 3.5rem;
+      font-weight: 900;
+      font-family: monospace;
+      color: var(--accent2);
+      margin: 16px 0;
+    }
+
+    .timer-btns {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .timer-btns button {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: .2s;
+      font-size: .85rem;
+    }
+
+    .fact-text {
+      font-size: 1.05rem;
+      line-height: 1.6;
+      color: var(--text);
+      padding: 16px;
+      background: rgba(139, 92, 246, .06);
+      border-radius: 12px;
+      margin: 12px 0;
+      font-style: italic;
+    }
+  </style>
+</head>
+
+<body data-theme="dark">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <img src="images/logo.png" alt="Logo" onerror="this.style.display='none'">
+      <span class="sidebar-logo-text">JasontheWeener</span>
+    </div>
+    <div class="sidebar-tagline">AI-Powered Game Hub</div>
+    <div class="nav" id="sideNav">
+      <button class="nav-btn active" onclick="navigate('home')" data-page="home">🏠 Home</button>
+      <button class="nav-btn" onclick="navigate('games')" data-page="games">🤖 AI Games <span class="badge"
+          id="gameCount">0</span></button>
+      <button class="nav-btn" onclick="navigate('experiments')" data-page="experiments">🧪 Experiments</button>
+      <button class="nav-btn" onclick="navigate('favorites')" data-page="favorites">⭐ Favorites <span class="badge"
+          id="favCount">0</span></button>
+    </div>
+    <div class="sidebar-footer">
+      <button class="theme-btn" onclick="toggleTheme()">🌓 Toggle Theme</button>
+      <div style="display:flex;gap:5px;margin-top:8px">
+        <button onclick="exportProgress()"
+          style="flex:1;padding:6px;border:none;border-radius:8px;background:rgba(34,197,94,.12);color:#22c55e;font-size:.7rem;font-weight:700;cursor:pointer">📤
+          Export</button>
+        <button onclick="document.getElementById('importFile').click()"
+          style="flex:1;padding:6px;border:none;border-radius:8px;background:rgba(59,130,246,.12);color:#3b82f6;font-size:.7rem;font-weight:700;cursor:pointer">📥
+          Import</button>
+      </div>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importProgress(event)">
+      <p style="text-align:center;font-size:.65rem;color:var(--dim);margin-top:10px;line-height:1.4">© 2026
+        JasontheWeener<br>Created by Jason Maskell</p>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <!-- HOME PAGE -->
+    <div class="page active" id="page-home">
+      <div class="hero">
+        <img class="hero-img" src="images/logo.png" alt="JasontheWeener" onerror="this.style.display='none'">
+        <div class="hero-content">
+          <h1>Welcome to JasontheWeener</h1>
+          <p>Your hub for unique AI-generated games. From rhythm battles to time-bending taxi rides — every game here
+            was crafted with AI. Explore, play, and compete!</p>
+          <button class="hero-btn" onclick="navigate('games')">🎮 Browse Games</button>
+          <button class="hero-btn" onclick="playRandom()"
+            style="margin-left:8px;background:linear-gradient(135deg,var(--pink),var(--gold))">🎲 Surprise Me!</button>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-val" id="statGames">0</div>
+          <div class="stat-lbl">Games</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="statFavs">0</div>
+          <div class="stat-lbl">Favorites</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="statCategories">0</div>
+          <div class="stat-lbl">Categories</div>
+        </div>
+      </div>
+
+      <div class="section-title">🔥 Featured Games <span class="see-all" onclick="navigate('games')">See all →</span>
+      </div>
+      <div class="grid" id="featuredGrid"></div>
+
+      <div class="section-title" style="margin-top:10px">📰 What's New</div>
+      <div id="whatsNew"
+        style="background:var(--panel);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:18px">
+        <p style="color:var(--muted);font-size:.88rem;line-height:1.6">
+          <strong style="color:var(--accent)">🎵 Neon Rhythm</strong> — New 3D Guitar Hero-style rhythm game with 5
+          original synth tracks!<br>
+          <strong style="color:var(--accent2)">🏃 Anti-Gravity Runner</strong> — Flip gravity in a 3D neon tunnel<br>
+          <strong style="color:var(--gold)">🚕 Time-Shift Taxi</strong> — Navigate time zones and deliver passengers<br>
+          <strong style="color:var(--green)">🧪 Experiments</strong> — New section with Neon Search and web tools!
+        </p>
+      </div>
+    </div>
+
+    <!-- AI GAMES PAGE -->
+    <div class="page" id="page-games">
+      <h1 style="font-size:1.6rem;font-weight:900;margin-bottom:6px">🤖 AI Games</h1>
+      <p style="color:var(--muted);font-size:.88rem;margin-bottom:18px">Every game here was designed and coded by AI</p>
+      <div class="search-bar">
+        <input class="search-input" id="gameSearch" placeholder="Search games..." oninput="filterGames()">
+        <button class="hero-btn" onclick="playRandom()" style="padding:10px 18px;font-size:.85rem">🎲 Random</button>
+      </div>
+      <div class="filter-btns" id="filterBtns"></div>
+      <div class="grid" id="gameGrid"></div>
+    </div>
+
+    <!-- EXPERIMENTS PAGE -->
+    <div class="page" id="page-experiments">
+      <div class="exp-hero">
+        <h1>🧪 Neon Search</h1>
+        <p>Search the web for knowledge — pick your source</p>
+        <div style="display:flex;gap:6px;justify-content:center;margin-bottom:14px">
+          <button id="srcWiki" onclick="setSearchSource('wikipedia')"
+            style="padding:7px 18px;border-radius:20px;border:2px solid var(--accent);background:var(--accent);color:#fff;font-weight:700;font-size:.8rem;cursor:pointer;transition:.2s">📖
+            Wikipedia</button>
+          <button id="srcBrit" onclick="setSearchSource('britannica')"
+            style="padding:7px 18px;border-radius:20px;border:2px solid rgba(255,255,255,.15);background:transparent;color:var(--text);font-weight:700;font-size:.8rem;cursor:pointer;transition:.2s">🏅
+            Britannica</button>
+        </div>
+        <div class="exp-search-wrap">
+          <input id="expSearchInput" placeholder="Search anything..." onkeydown="if(event.key==='Enter')doSearch()">
+          <button onclick="doSearch()">🔍 Search</button>
+        </div>
+      </div>
+      <div class="exp-results" id="expResults"></div>
+
+      <div class="section-title" style="margin-top:32px">🛠️ Quick Tools</div>
+      <div class="tools-grid">
+        <div class="tool-card" onclick="openTool('color')">
+          <div class="tool-icon">🎨</div>
+          <h3>Color Picker</h3>
+          <p>Explore and copy hex colors</p>
+        </div>
+        <div class="tool-card" onclick="openTool('timer')">
+          <div class="tool-icon">⏱️</div>
+          <h3>Stopwatch</h3>
+          <p>Precision timer with lap tracking</p>
+        </div>
+        <div class="tool-card" onclick="openTool('fact')">
+          <div class="tool-icon">🧠</div>
+          <h3>Random Facts</h3>
+          <p>Discover interesting facts</p>
+        </div>
+        <div class="tool-card" onclick="openTool('coin')">
+          <div class="tool-icon">🪙</div>
+          <h3>Coin Flip</h3>
+          <p>Heads or tails — let fate decide</p>
+        </div>
+        <div class="tool-card" onclick="openTool('calc')">
+          <div class="tool-icon">🧮</div>
+          <h3>Calculator</h3>
+          <p>Quick math calculations</p>
+        </div>
+        <div class="tool-card" onclick="openTool('units')">
+          <div class="tool-icon">📏</div>
+          <h3>Unit Converter</h3>
+          <p>Convert length, weight & temperature</p>
+        </div>
+        <div class="tool-card" onclick="openTool('notepad')">
+          <div class="tool-icon">📝</div>
+          <h3>Notepad</h3>
+          <p>Quick notes — auto-saved locally</p>
+        </div>
+        <div class="tool-card" onclick="openTool('wordcount')">
+          <div class="tool-icon">🔤</div>
+          <h3>Word Counter</h3>
+          <p>Count words, characters & sentences</p>
+        </div>
+        <div class="tool-card" onclick="openTool('dice')">
+          <div class="tool-icon">🎲</div>
+          <h3>Dice Roller</h3>
+          <p>Roll D4 to D20 — tabletop style</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAVORITES PAGE -->
+    <div class="page" id="page-favorites">
+      <h1 style="font-size:1.6rem;font-weight:900;margin-bottom:6px">⭐ Favorites</h1>
+      <p style="color:var(--muted);font-size:.88rem;margin-bottom:18px">Your personally starred games</p>
+      <div class="grid" id="favGrid"></div>
+      <div class="empty-state" id="favEmpty" style="display:none">
+        <div class="icon">⭐</div>
+        <h2>No favorites yet</h2>
+        <p>Star games from the AI Games section and they'll appear here!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME VIEWER -->
+  <div class="viewer" id="viewer">
+    <div class="viewer-bar">
+      <button onclick="closeGame()">⬅ Back</button>
+      <span id="viewerTitle"></span>
+    </div>
+    <iframe id="gameFrame"></iframe>
+  </div>
+
+  <!-- TOOL MODALS -->
+  <div class="tool-modal" id="toolModal-color">
+    <div class="tool-panel">
+      <h2>🎨 Color Picker</h2>
+      <div class="color-preview" id="colorPreview" style="background:#8b5cf6"></div>
+      <input type="color" id="colorPicker" value="#8b5cf6"
+        style="width:100%;height:40px;border:none;cursor:pointer;border-radius:8px" oninput="updateColor(this.value)">
+      <input class="color-input" id="colorHex" value="#8B5CF6" readonly onclick="copyColor()">
+      <p style="font-size:.75rem;color:var(--dim);margin-top:6px">Click hex to copy</p>
+      <button class="close-btn" onclick="closeTool('color')">Close</button>
+    </div>
+  </div>
+
+  <div class="tool-modal" id="toolModal-timer">
+    <div class="tool-panel">
+      <h2>⏱️ Stopwatch</h2>
+      <div class="timer-display" id="timerDisplay">00:00.00</div>
+      <div class="timer-btns">
+        <button style="background:var(--green);color:#fff" onclick="timerStart()">▶ Start</button>
+        <button style="background:var(--gold);color:#111" onclick="timerStop()">⏸ Stop</button>
+        <button style="background:rgba(255,255,255,.1);color:var(--muted)" onclick="timerReset()">↺ Reset</button>
+      </div>
+      <button class="close-btn" onclick="closeTool('timer')">Close</button>
+    </div>
+  </div>
+
+  <div class="tool-modal" id="toolModal-fact">
+    <div class="tool-panel">
+      <h2>🧠 Random Fact</h2>
+      <div class="fact-text" id="factText">Click the button to discover something new!</div>
+      <button class="hero-btn" onclick="newFact()" style="margin-top:10px">🔄 New Fact</button>
+      <br><button class="close-btn" onclick="closeTool('fact')">Close</button>
+    </div>
+  </div>
+
+  <div class="tool-modal" id="toolModal-coin">
+    <div class="tool-panel">
+      <h2>🪙 Coin Flip</h2>
+      <div id="coinResult" style="font-size:4rem;margin:16px 0">🪙</div>
+      <div id="coinText" style="font-size:1.2rem;font-weight:700;color:var(--accent);margin-bottom:10px">Flip it!</div>
+      <button class="hero-btn" onclick="flipCoin()">Flip!</button>
+      <br><button class="close-btn" onclick="closeTool('coin')">Close</button>
+    </div>
+  </div>
+
+  <!-- CALCULATOR -->
+  <div class="tool-modal" id="toolModal-calc">
+    <div class="tool-panel">
+      <h2>🧮 Calculator</h2>
+      <div id="calcDisplay"
+        style="background:rgba(0,0,0,.4);padding:14px;border-radius:10px;text-align:right;font-size:1.6rem;font-weight:700;color:var(--accent2);min-height:50px;margin-bottom:10px;word-break:break-all;font-family:monospace">
+        0</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+        <button onclick="calcBtn('C')"
+          style="grid-column:span 2;padding:12px;border:none;border-radius:8px;background:rgba(239,68,68,.2);color:#ef4444;font-size:1rem;font-weight:700;cursor:pointer">C</button>
+        <button onclick="calcBtn('⌫')"
+          style="padding:12px;border:none;border-radius:8px;background:rgba(255,255,255,.08);color:var(--text);font-size:1rem;cursor:pointer">⌫</button>
+        <button onclick="calcBtn('/')"
+          style="padding:12px;border:none;border-radius:8px;background:rgba(139,92,246,.2);color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer">÷</button>
+        <button onclick="calcBtn('7')"
+          style="padding:12px;border:none;border-radius:8px;background:rgba(255,255,255,.06);color:#fff;font-size:1rem;cursor:pointer">7</button>
+        <button onclick="calcBtn('8')"
+          style="padding:12px;border:none;border-radius:8px;background:rgba(255,255,255,.06);color:#fff;font-size:1rem;cursor:pointer">8</button>
+        <button onclick="calcBtn('9')"
+          style="padding:12px;border:none;border-radius:8px;background:rgba(255,255,255,.06);color:#fff;font-size:1rem;cursor:pointer">9</button>
+        <button onclick="calcBtn('*')"
+          style="padding:12px;border:none;border-radius:8px;background:rgba(139,92,246,.2);color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer">×</button>
+        <button onclick="calcBtn('4')"
+          style="padding:12px;border:none;border-radius:8px;background:rgba(255,255,255,.06);color:#fff;font-size:1rem;cursor:pointer">4</button>
+        <button onclick="calcBtn('5')"
+          style="padding:12px;border:none;border-radius:8px;background:rgba(255,255,255,.06);color:#fff;font-size:1rem;cursor:pointer">5</button>
+        <button onclick="calcBtn('6')"
+          style="padding:12px;border:none;border-radius:8px;background:rgba(255,255,255,.06);color:#fff;font-size:1rem;cursor:pointer">6</button>
+        <button onclick="calcBtn('-')"
+          style="padding:12px;border:none;border-radius:8px;background:rgba(139,92,246,.2);color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer">−</button>
+        <button onclick="calcBtn('1')"
+          style="padding:12px;border:none;border-radius:8px;background:rgba(255,255,255,.06);color:#fff;font-size:1rem;cursor:pointer">1</button>
+        <button onclick="calcBtn('2')"
+          style="padding:12px;border:none;border-radius:8px;background:rgba(255,255,255,.06);color:#fff;font-size:1rem;cursor:pointer">2</button>
+        <button onclick="calcBtn('3')"
+          style="padding:12px;border:none;border-radius:8px;background:rgba(255,255,255,.06);color:#fff;font-size:1rem;cursor:pointer">3</button>
+        <button onclick="calcBtn('+')"
+          style="padding:12px;border:none;border-radius:8px;background:rgba(139,92,246,.2);color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer">+</button>
+        <button onclick="calcBtn('0')"
+          style="grid-column:span 2;padding:12px;border:none;border-radius:8px;background:rgba(255,255,255,.06);color:#fff;font-size:1rem;cursor:pointer">0</button>
+        <button onclick="calcBtn('.')"
+          style="padding:12px;border:none;border-radius:8px;background:rgba(255,255,255,.06);color:#fff;font-size:1rem;cursor:pointer">.</button>
+        <button onclick="calcBtn('=')"
+          style="padding:12px;border:none;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--pink));color:#fff;font-size:1rem;font-weight:700;cursor:pointer">=</button>
+      </div>
+      <button class="close-btn" onclick="closeTool('calc')">Close</button>
+    </div>
+  </div>
+
+  <!-- UNIT CONVERTER -->
+  <div class="tool-modal" id="toolModal-units">
+    <div class="tool-panel">
+      <h2>📏 Unit Converter</h2>
+      <select id="unitType" onchange="updateUnitOptions()"
+        style="width:100%;padding:10px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:.9rem;margin-bottom:10px">
+        <option value="length">Length</option>
+        <option value="weight">Weight</option>
+        <option value="temperature">Temperature</option>
+      </select>
+      <input id="unitInput" type="number" value="1" oninput="convertUnit()"
+        style="width:100%;padding:10px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:1.1rem;text-align:center;margin-bottom:8px">
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
+        <select id="unitFrom" onchange="convertUnit()"
+          style="flex:1;padding:8px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:.85rem"></select>
+        <span style="color:var(--accent);font-weight:900">→</span>
+        <select id="unitTo" onchange="convertUnit()"
+          style="flex:1;padding:8px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:.85rem"></select>
+      </div>
+      <div id="unitResult"
+        style="text-align:center;font-size:1.4rem;font-weight:800;color:var(--accent2);padding:14px;background:rgba(0,0,0,.3);border-radius:10px;margin-bottom:10px">
+        1</div>
+      <button class="close-btn" onclick="closeTool('units')">Close</button>
+    </div>
+  </div>
+
+  <!-- NOTEPAD -->
+  <div class="tool-modal" id="toolModal-notepad">
+    <div class="tool-panel">
+      <h2>📝 Notepad</h2>
+      <textarea id="notepadArea" oninput="localStorage.setItem('jtw_notepad',this.value)"
+        placeholder="Type your notes here... Auto-saved!"
+        style="width:100%;height:220px;padding:12px;border-radius:10px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.9rem;font-family:inherit;resize:vertical;line-height:1.6"></textarea>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button onclick="document.getElementById('notepadArea').value='';localStorage.removeItem('jtw_notepad')"
+          style="flex:1;padding:8px;border:none;border-radius:8px;background:rgba(239,68,68,.15);color:#ef4444;font-weight:700;cursor:pointer;font-size:.8rem">🗑
+          Clear</button>
+        <button onclick="navigator.clipboard?.writeText(document.getElementById('notepadArea').value)"
+          style="flex:1;padding:8px;border:none;border-radius:8px;background:rgba(139,92,246,.15);color:var(--accent);font-weight:700;cursor:pointer;font-size:.8rem">📋
+          Copy All</button>
+      </div>
+      <button class="close-btn" onclick="closeTool('notepad')">Close</button>
+    </div>
+  </div>
+
+  <!-- WORD COUNTER -->
+  <div class="tool-modal" id="toolModal-wordcount">
+    <div class="tool-panel">
+      <h2>🔤 Word Counter</h2>
+      <textarea id="wcArea" oninput="countWords()" placeholder="Paste or type text here..."
+        style="width:100%;height:160px;padding:12px;border-radius:10px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.9rem;font-family:inherit;resize:vertical;line-height:1.6"></textarea>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px">
+        <div style="text-align:center;padding:10px;background:rgba(255,255,255,.04);border-radius:8px">
+          <div style="font-size:1.3rem;font-weight:900;color:var(--accent)" id="wcChars">0</div>
+          <div style="font-size:.7rem;color:var(--dim)">Characters</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:rgba(255,255,255,.04);border-radius:8px">
+          <div style="font-size:1.3rem;font-weight:900;color:var(--accent2)" id="wcWords">0</div>
+          <div style="font-size:.7rem;color:var(--dim)">Words</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:rgba(255,255,255,.04);border-radius:8px">
+          <div style="font-size:1.3rem;font-weight:900;color:var(--pink)" id="wcSentences">0</div>
+          <div style="font-size:.7rem;color:var(--dim)">Sentences</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:rgba(255,255,255,.04);border-radius:8px">
+          <div style="font-size:1.3rem;font-weight:900;color:var(--green)" id="wcParas">0</div>
+          <div style="font-size:.7rem;color:var(--dim)">Paragraphs</div>
+        </div>
+      </div>
+      <button class="close-btn" onclick="closeTool('wordcount')">Close</button>
+    </div>
+  </div>
+
+  <!-- DICE ROLLER -->
+  <div class="tool-modal" id="toolModal-dice">
+    <div class="tool-panel">
+      <h2>🎲 Dice Roller</h2>
+      <div id="diceResult"
+        style="font-size:3.5rem;font-weight:900;text-align:center;color:var(--accent2);margin:10px 0;text-shadow:0 0 20px rgba(249,115,22,.4)">
+        ?</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:10px">
+        <button onclick="rollDice(4)"
+          style="padding:8px 14px;border:none;border-radius:8px;background:rgba(239,68,68,.15);color:#ef4444;font-weight:700;cursor:pointer;font-size:.85rem">D4</button>
+        <button onclick="rollDice(6)"
+          style="padding:8px 14px;border:none;border-radius:8px;background:rgba(249,115,22,.15);color:#f97316;font-weight:700;cursor:pointer;font-size:.85rem">D6</button>
+        <button onclick="rollDice(8)"
+          style="padding:8px 14px;border:none;border-radius:8px;background:rgba(234,179,8,.15);color:#eab308;font-weight:700;cursor:pointer;font-size:.85rem">D8</button>
+        <button onclick="rollDice(10)"
+          style="padding:8px 14px;border:none;border-radius:8px;background:rgba(34,197,94,.15);color:#22c55e;font-weight:700;cursor:pointer;font-size:.85rem">D10</button>
+        <button onclick="rollDice(12)"
+          style="padding:8px 14px;border:none;border-radius:8px;background:rgba(59,130,246,.15);color:#3b82f6;font-weight:700;cursor:pointer;font-size:.85rem">D12</button>
+        <button onclick="rollDice(20)"
+          style="padding:8px 14px;border:none;border-radius:8px;background:rgba(139,92,246,.15);color:#8b5cf6;font-weight:700;cursor:pointer;font-size:.85rem">D20</button>
+      </div>
+      <div id="diceHistory" style="font-size:.75rem;color:var(--dim);text-align:center;max-height:60px;overflow-y:auto">
+      </div>
+      <button class="close-btn" onclick="closeTool('dice')">Close</button>
+    </div>
+  </div>
+
+  <script>
+    // ===== GAME DATA =====
+    const games = [
+      { title: "Time-Shift Taxi", desc: "Navigate time zones, deliver passengers, and beat the clock in this arcade puzzler!", file: "games/time-shift-taxi.html", category: "Arcade", preview: "images/time-shift-taxi.png", tags: ["arcade", "puzzle", "taxi", "time"] },
+      { title: "Anti-Gravity Runner", desc: "Flip gravity in this 3D neon tunnel runner — dodge obstacles and survive the void!", file: "games/antigravity.html", category: "Arcade", preview: "images/antigravity.jpg", tags: ["3d", "fast", "reflex"] },
+      { title: "Neon Rhythm", desc: "3D Guitar Hero-style rhythm game — hit the beats across 5 synth tracks!", file: "games/neon-rhythm.html", category: "Arcade", preview: "images/neon-rhythm.png", tags: ["rhythm", "music", "3d", "neon"] },
+      { title: "Void Arena", desc: "3D FPS wave-survival — buy weapons, upgrade guns, and fight endless enemy waves!", file: "games/void-arena.html", category: "Action", preview: "images/void-arena.png", tags: ["fps", "3d", "survival", "waves", "action"] },
+      { title: "Puzzle AI", desc: "6 puzzle modes — sequences, word scrambles, math, memory match, pattern fill & mixed! 3 difficulty levels with streak scoring.", file: "games/puzzle-ai.html", category: "Puzzle", preview: "images/puzzle-ai.png", tags: ["puzzle", "thinking", "logic", "memory", "math"] },
+      { title: "Neon Cookie Clicker", desc: "Click cookies, buy buildings, unlock upgrades & achievements — classic idle game with neon style!", file: "games/cookie-clicker.html", category: "Idle", preview: "images/cookie-clicker.png", tags: ["idle", "clicker", "cookie", "incremental"] },
+      { title: "Pixel Garden", desc: "Grow and manage a tiny garden — plant seeds, water, harvest, and unlock exotic plants!", file: "games/pixel-garden.html", category: "Idle", preview: "images/pixel-garden.png", tags: ["idle", "garden", "relaxing", "management"] },
+      { title: "Speed Type", desc: "Test your typing speed — words, sentences, code & quotes modes with live WPM tracking!", file: "games/speed-type.html", category: "Skill", preview: "images/speed-type.png", tags: ["typing", "speed", "skill", "test"] },
+      { title: "Neon Drive VIP", desc: "3D Driving Simulator. Deep vehicle customization, physics, drifting & 3 tracks.", file: "games/neon-drive.html", category: "Action", preview: "images/neon-drive.png", tags: ["3d", "driving", "racing", "cars"] }
+    ];
+
+    // ===== FAVORITES =====
+    let favorites = JSON.parse(localStorage.getItem('jtw_favs') || '[]');
+    function isFav(title) { return favorites.includes(title); }
+    function toggleFav(title, e) {
+      if (e) e.stopPropagation();
+      if (isFav(title)) favorites = favorites.filter(f => f !== title);
+      else favorites.push(title);
+      localStorage.setItem('jtw_favs', JSON.stringify(favorites));
+      renderAll();
+    }
+
+    // ===== NAVIGATION =====
+    function navigate(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + page).classList.add('active');
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector(`.nav-btn[data-page="${page}"]`).classList.add('active');
+      if (page === 'favorites') renderFavorites();
+      document.querySelector('.main').scrollTop = 0;
+    }
+
+    // ===== RENDERING =====
+    function renderCard(g, container) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const imgSrc = g.preview || '';
+      card.innerHTML = `
+    <button class="card-fav ${isFav(g.title) ? 'favorited' : ''}" onclick="toggleFav('${g.title.replace(/'/g, "\\'")}', event)">${isFav(g.title) ? '★' : '☆'}</button>
+    ${imgSrc ? `<img class="card-img" src="${imgSrc}" alt="${g.title}" onerror="this.style.background='var(--panel2)';this.src=''">` : '<div class="card-img"></div>'}
+    <div class="card-body">
+      <h3>${g.title}</h3>
+      <p>${g.desc}</p>
+      <div class="card-tags">${g.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}</div>
+    </div>
+  `;
+      card.onclick = () => openGame(g.file, g.title);
+      container.appendChild(card);
+    }
+
+    // Coin Flip
+    function flipCoin() {
+      const el = document.getElementById('coinResult');
+      const txt = document.getElementById('coinText');
+      el.style.transition = 'transform .5s';
+      el.style.transform = 'rotateY(720deg)';
+      txt.textContent = '...';
+      setTimeout(() => {
+        const heads = Math.random() > .5;
+        el.textContent = heads ? '🟡' : '⚫';
+        txt.textContent = heads ? 'HEADS!' : 'TAILS!';
+        txt.style.color = heads ? 'var(--gold)' : 'var(--accent2)';
+        el.style.transform = 'none';
+      }, 500);
+    }
+
+    // Calculator
+    let calcStr = '0';
+    function calcBtn(v) {
+      if (v === 'C') { calcStr = '0'; }
+      else if (v === '⌫') { calcStr = calcStr.length > 1 ? calcStr.slice(0, -1) : '0'; }
+      else if (v === '=') {
+        try { calcStr = String(parseFloat(eval(calcStr).toFixed(10))); } catch { calcStr = 'Error'; }
+      }
+      else { if (calcStr === '0' && v !== '.') calcStr = v; else calcStr += v; }
+      document.getElementById('calcDisplay').textContent = calcStr;
+    }
+
+    // Unit Converter
+    const UNITS = {
+      length: { m: 1, km: 1000, cm: .01, mm: .001, in: .0254, ft: .3048, yd: .9144, mi: 1609.344 },
+      weight: { kg: 1, g: .001, mg: .000001, lb: .453592, oz: .0283495, ton: 907.185 },
+      temperature: { '°C': 'c', '°F': 'f', 'K': 'k' }
+    };
+    function updateUnitOptions() {
+      const type = document.getElementById('unitType').value;
+      const keys = Object.keys(UNITS[type]);
+      const optHtml = keys.map(k => `<option value="${k}">${k}</option>`).join('');
+      document.getElementById('unitFrom').innerHTML = optHtml;
+      document.getElementById('unitTo').innerHTML = optHtml;
+      if (keys.length > 1) document.getElementById('unitTo').selectedIndex = 1;
+      convertUnit();
+    }
+    function convertUnit() {
+      const type = document.getElementById('unitType').value;
+      const val = parseFloat(document.getElementById('unitInput').value) || 0;
+      const from = document.getElementById('unitFrom').value;
+      const to = document.getElementById('unitTo').value;
+      let result;
+      if (type === 'temperature') {
+        let celsius;
+        if (from === '°C') celsius = val;
+        else if (from === '°F') celsius = (val - 32) * 5 / 9;
+        else celsius = val - 273.15;
+        if (to === '°C') result = celsius;
+        else if (to === '°F') result = celsius * 9 / 5 + 32;
+        else result = celsius + 273.15;
+      } else {
+        result = val * UNITS[type][from] / UNITS[type][to];
+      }
+      document.getElementById('unitResult').textContent = parseFloat(result.toFixed(6)) + ' ' + to;
+    }
+    updateUnitOptions();
+
+    // Word Counter
+    function countWords() {
+      const text = document.getElementById('wcArea').value;
+      document.getElementById('wcChars').textContent = text.length;
+      document.getElementById('wcWords').textContent = text.trim() ? text.trim().split(/\s+/).length : 0;
+      document.getElementById('wcSentences').textContent = text.trim() ? (text.match(/[.!?]+/g) || []).length || (text.trim().length > 0 ? 1 : 0) : 0;
+      document.getElementById('wcParas').textContent = text.trim() ? text.trim().split(/\n\s*\n/).length : 0;
+    }
+
+    // Dice Roller
+    let diceRolls = [];
+    function rollDice(sides) {
+      const el = document.getElementById('diceResult');
+      el.style.transform = 'scale(1.3)'; el.style.transition = 'transform .15s';
+      setTimeout(() => { el.style.transform = 'scale(1)'; }, 150);
+      const result = Math.floor(Math.random() * sides) + 1;
+      el.textContent = result;
+      el.style.color = result === sides ? '#22c55e' : result === 1 ? '#ef4444' : 'var(--accent2)';
+      diceRolls.unshift(`D${sides}: ${result}`);
+      if (diceRolls.length > 12) diceRolls.length = 12;
+      document.getElementById('diceHistory').textContent = diceRolls.join('  •  ');
+    }
+
+    // Load notepad
+    document.getElementById('notepadArea').value = localStorage.getItem('jtw_notepad') || '';
+
+    function renderAll() {
+      // Stats
+      document.getElementById('statGames').textContent = games.length;
+      document.getElementById('statFavs').textContent = favorites.length;
+      document.getElementById('statCategories').textContent = new Set(games.map(g => g.category)).size;
+      document.getElementById('gameCount').textContent = games.length;
+      document.getElementById('favCount').textContent = favorites.length;
+
+      // Featured (first 3)
+      const fg = document.getElementById('featuredGrid');
+      fg.innerHTML = '';
+      games.slice(0, 3).forEach(g => renderCard(g, fg));
+
+      // Category filters
+      const cats = ['All', ...new Set(games.map(g => g.category))];
+      const fb = document.getElementById('filterBtns');
+      fb.innerHTML = '';
+      cats.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-btn' + (c === currentCat ? ' active' : '');
+        btn.textContent = c;
+        btn.onclick = () => { currentCat = c; document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); filterGames(); };
+        fb.appendChild(btn);
+      });
+
+      filterGames();
+    }
+
+    let currentCat = 'All';
+    function filterGames() {
+      const q = (document.getElementById('gameSearch')?.value || '').toLowerCase();
+      const filtered = games.filter(g =>
+        (currentCat === 'All' || g.category === currentCat) &&
+        (g.title.toLowerCase().includes(q) || g.tags.some(t => t.includes(q)))
+      );
+      const grid = document.getElementById('gameGrid');
+      grid.innerHTML = '';
+      filtered.forEach(g => renderCard(g, grid));
+      if (!filtered.length) grid.innerHTML = '<p style="color:var(--dim);grid-column:1/-1;text-align:center;padding:40px">No games found</p>';
+    }
+
+    function renderFavorites() {
+      const grid = document.getElementById('favGrid');
+      const empty = document.getElementById('favEmpty');
+      const favGames = games.filter(g => isFav(g.title));
+      grid.innerHTML = '';
+      if (!favGames.length) { empty.style.display = 'block'; grid.style.display = 'none'; }
+      else { empty.style.display = 'none'; grid.style.display = 'grid'; favGames.forEach(g => renderCard(g, grid)); }
+      document.getElementById('favCount').textContent = favorites.length;
+    }
+
+    // ===== GAME VIEWER =====
+    function openGame(src, title) {
+      document.getElementById('viewer').style.display = 'flex';
+      document.getElementById('gameFrame').src = src;
+      document.getElementById('viewerTitle').textContent = title || '';
+    }
+    function closeGame() {
+      document.getElementById('viewer').style.display = 'none';
+      document.getElementById('gameFrame').src = '';
+    }
+    function playRandom() {
+      const g = games[Math.floor(Math.random() * games.length)];
+      openGame(g.file, g.title);
+    }
+
+    // ===== THEME =====
+    function toggleTheme() {
+      const b = document.body;
+      b.dataset.theme = b.dataset.theme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('jtw_theme', b.dataset.theme);
+    }
+    if (localStorage.getItem('jtw_theme')) document.body.dataset.theme = localStorage.getItem('jtw_theme');
+
+    // ===== EXPERIMENTS: SEARCH =====
+    let searchSource = 'wikipedia';
+    function setSearchSource(src) {
+      searchSource = src;
+      const wBtn = document.getElementById('srcWiki');
+      const bBtn = document.getElementById('srcBrit');
+      if (src === 'wikipedia') {
+        wBtn.style.background = 'var(--accent)'; wBtn.style.borderColor = 'var(--accent)'; wBtn.style.color = '#fff';
+        bBtn.style.background = 'transparent'; bBtn.style.borderColor = 'rgba(255,255,255,.15)'; bBtn.style.color = 'var(--text)';
+      } else {
+        bBtn.style.background = 'var(--accent)'; bBtn.style.borderColor = 'var(--accent)'; bBtn.style.color = '#fff';
+        wBtn.style.background = 'transparent'; wBtn.style.borderColor = 'rgba(255,255,255,.15)'; wBtn.style.color = 'var(--text)';
+      }
+      // Re-run search if results already showing
+      if (document.getElementById('expResults').innerHTML && document.getElementById('expSearchInput').value.trim()) doSearch();
+    }
+
+    async function doSearch() {
+      const q = document.getElementById('expSearchInput').value.trim();
+      if (!q) return;
+      const results = document.getElementById('expResults');
+      const isBrit = searchSource === 'britannica';
+      const srcLabel = isBrit ? '🏅 Britannica' : '📖 Wikipedia';
+      results.innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">🔍 Searching ${srcLabel}...</p>`;
+      try {
+        // Wikipedia API powers both (only free CORS-friendly encyclopedia API)
+        const resp = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&format=json&origin=*&srlimit=8&srprop=snippet|titlesnippet`);
+        const data = await resp.json();
+        const items = data.query?.search || [];
+        if (items.length === 0) {
+          results.innerHTML = '<p style="color:var(--muted);text-align:center;padding:30px">🙅 No results found. Try different keywords.</p>';
+          return;
+        }
+        let html = '<div style="display:grid;gap:12px;margin-bottom:16px">';
+        for (const item of items) {
+          const slug = item.title.replace(/ /g, isBrit ? '-' : '_');
+          const url = isBrit
+            ? `https://www.britannica.com/search?query=${encodeURIComponent(item.title)}`
+            : `https://en.wikipedia.org/wiki/${encodeURIComponent(slug)}`;
+          const domain = isBrit ? 'britannica.com' : 'en.wikipedia.org';
+          const accent = isBrit ? '#e6842e' : 'var(--accent)';
+          const snippet = item.snippet.replace(/<[^>]+>/g, '');
+          html += `<a href="${url}" target="_blank" rel="noopener" style="display:block;padding:14px 18px;background:var(--panel);border:1px solid rgba(255,255,255,.08);border-radius:12px;text-decoration:none;transition:.2s;cursor:pointer" onmouseenter="this.style.borderColor='${accent}'" onmouseleave="this.style.borderColor='rgba(255,255,255,.08)'">
+            <div style="font-weight:700;color:${accent};font-size:.95rem;margin-bottom:4px">${item.title}</div>
+            <div style="font-size:.82rem;color:var(--text);line-height:1.5;opacity:.8">${snippet}...</div>
+            <div style="font-size:.7rem;color:var(--muted);margin-top:6px">🌐 ${domain}</div>
+          </a>`;
+        }
+        html += '</div>';
+        html += `<div style="text-align:center;padding:10px"><a href="https://www.google.com/search?q=${encodeURIComponent(q)}" target="_blank" rel="noopener" style="color:var(--accent);font-size:.85rem;text-decoration:underline">🔎 Also search Google for "${q}"</a></div>`;
+        results.innerHTML = html;
+      } catch (e) {
+        results.innerHTML = '<p style="color:#ef4444;text-align:center;padding:20px">⚠️ Search failed — check your connection and try again.</p>';
+      }
+    }
+
+    // ===== TOOLS =====
+    function openTool(id) { document.getElementById('toolModal-' + id).classList.add('open'); }
+    function closeTool(id) { document.getElementById('toolModal-' + id).classList.remove('open'); }
+
+    // Color Picker
+    function updateColor(val) {
+      document.getElementById('colorPreview').style.background = val;
+      document.getElementById('colorHex').value = val.toUpperCase();
+    }
+    function copyColor() {
+      const hex = document.getElementById('colorHex').value;
+      navigator.clipboard?.writeText(hex);
+      document.getElementById('colorHex').value = 'Copied!';
+      setTimeout(() => document.getElementById('colorHex').value = hex, 800);
+    }
+
+    // Stopwatch
+    let timerInterval, timerMs = 0, timerRunning = false;
+    function timerStart() {
+      if (timerRunning) return;
+      timerRunning = true;
+      const start = Date.now() - timerMs;
+      timerInterval = setInterval(() => {
+        timerMs = Date.now() - start;
+        const m = Math.floor(timerMs / 60000), s = Math.floor(timerMs / 1000) % 60, ms = Math.floor(timerMs / 10) % 100;
+        document.getElementById('timerDisplay').textContent =
+          `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(ms).padStart(2, '0')}`;
+      }, 10);
+    }
+    function timerStop() { clearInterval(timerInterval); timerRunning = false; }
+    function timerReset() { timerStop(); timerMs = 0; document.getElementById('timerDisplay').textContent = '00:00.00'; }
+
+    // Random Facts
+    const facts = [
+      "Honey never spoils — archaeologists have found 3000-year-old honey that's still edible.",
+      "Octopuses have three hearts and blue blood.",
+      "A group of flamingos is called a 'flamboyance'.",
+      "The shortest war in history lasted 38 minutes (Britain vs Zanzibar, 1896).",
+      "Bananas are berries, but strawberries aren't.",
+      "The inventor of the Pringles can is buried in one.",
+      "There are more possible chess games than atoms in the observable universe.",
+      "A day on Venus is longer than a year on Venus.",
+      "The human brain uses about 20% of the body's total energy.",
+      "Cows have best friends and get stressed when separated.",
+      "The first computer programmer was Ada Lovelace in the 1840s.",
+      "Light takes 8 minutes and 20 seconds to travel from the Sun to Earth.",
+      "There are more trees on Earth than stars in the Milky Way.",
+      "The speed of a computer mouse is measured in 'Mickeys'.",
+      "Wombat poop is cube-shaped."
+    ];
+    function newFact() {
+      document.getElementById('factText').textContent = facts[Math.floor(Math.random() * facts.length)];
+    }
+
+    // ===== INIT =====
+    renderAll();
+
+    // ===== EXPORT / IMPORT =====
+    function exportProgress() {
+      const data = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('jtw_') || key.startsWith('va_') || key.startsWith('tst_') || key.startsWith('agr_') || key.startsWith('nr_')) {
+          data[key] = localStorage.getItem(key);
+        }
+      }
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `jasontheweener-save-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function importProgress(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          let count = 0;
+          for (const [key, val] of Object.entries(data)) {
+            localStorage.setItem(key, val);
+            count++;
+          }
+          alert(`Imported ${count} items! The page will reload.`);
+          location.reload();
+        } catch {
+          alert('Invalid save file.');
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    }
+  </script>
+</body>
+
+</html>
