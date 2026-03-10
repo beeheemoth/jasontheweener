@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loading Game...</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0b0e14;color:#e5e7eb;font-family:'Segoe UI',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;overflow:hidden}
+.loader{width:40px;height:40px;border:3px solid rgba(139,92,246,.2);border-top-color:#8b5cf6;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.msg{color:#9ca3af;font-size:.9rem;margin-bottom:8px}
+.err{color:#ef4444;display:none;text-align:center;max-width:400px;line-height:1.5}
+iframe{position:fixed;inset:0;width:100%;height:100%;border:none;z-index:10;background:#0b0e14}
+</style>
+</head>
+<body>
+<div id="loading">
+  <div class="loader"></div>
+  <div class="msg" id="status">Loading game...</div>
+</div>
+<div class="err" id="error">
+  <p style="font-size:1.2rem;margin-bottom:8px">⚠️ Couldn't load game</p>
+  <p id="errMsg">The game might be blocked or unavailable.</p>
+  <p style="margin-top:12px"><a id="directLink" href="#" target="_blank" style="color:#8b5cf6">Try opening directly →</a></p>
+</div>
+<script>
+const PROXIES = [
+  'https://api.allorigins.win/raw?url=',
+  'https://api.codetabs.com/v1/proxy?quest=',
+  'https://corsproxy.io/?url='
+];
+
+const params = new URLSearchParams(window.location.search);
+const url = params.get('url');
+const mode = params.get('mode') || 'proxy';
+
+if (url) {
+  document.getElementById('directLink').href = url;
+  
+  if (mode === 'direct') {
+    // Direct iframe embed
+    const iframe = document.createElement('iframe');
+    iframe.src = url;
+    iframe.allow = 'autoplay; fullscreen; gamepad';
+    iframe.allowFullscreen = true;
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.onload = () => { document.getElementById('loading').style.display = 'none'; };
+    iframe.onerror = () => showError('Could not load game iframe');
+    document.body.appendChild(iframe);
+    setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 5000);
+  } else {
+    // Proxy mode
+    loadViaProxy(url);
+  }
+} else {
+  showError('No game URL specified');
+}
+
+async function loadViaProxy(targetUrl) {
+  for (let i = 0; i < PROXIES.length; i++) {
+    try {
+      document.getElementById('status').textContent = `Trying proxy ${i + 1}/${PROXIES.length}...`;
+      const resp = await fetch(PROXIES[i] + encodeURIComponent(targetUrl));
+      if (!resp.ok) continue;
+      const html = await resp.text();
+      if (html.length < 100) continue;
+      
+      let baseUrl = '';
+      try { const u = new URL(targetUrl); baseUrl = u.origin; } catch(e) {}
+      
+      let clean = html;
+      if (baseUrl) {
+        if (clean.includes('<head')) {
+          clean = clean.replace(/<head([^>]*)>/i, '<head$1><base href="' + baseUrl + '/" target="_self">');
+        } else {
+          clean = '<base href="' + baseUrl + '/" target="_self">' + clean;
+        }
+      }
+      clean = clean.replace(/top\.location/gi, 'void(0)')
+                    .replace(/window\.location\s*=/gi, 'void(0)=')
+                    .replace(/document\.location/gi, 'void(0)');
+      
+      const iframe = document.createElement('iframe');
+      iframe.srcdoc = clean;
+      iframe.className = 'game-frame';
+      iframe.allow = 'autoplay; fullscreen; gamepad';
+      iframe.allowFullscreen = true;
+      iframe.onload = () => { document.getElementById('loading').style.display = 'none'; };
+      document.body.appendChild(iframe);
+      setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 5000);
+      return;
+    } catch(e) { continue; }
+  }
+  // Fallback: direct iframe
+  document.getElementById('status').textContent = 'Proxies failed, trying direct load...';
+  const iframe = document.createElement('iframe');
+  iframe.src = targetUrl;
+  iframe.className = 'game-frame';
+  iframe.allow = 'autoplay; fullscreen; gamepad';
+  iframe.allowFullscreen = true;
+  iframe.onload = () => { document.getElementById('loading').style.display = 'none'; };
+  document.body.appendChild(iframe);
+  setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 5000);
+}
+
+function showError(msg) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('error').style.display = 'block';
+  document.getElementById('errMsg').textContent = msg;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Time-Shift Taxi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: #0a0a1a;
+            overflow: hidden;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: #fff
+        }
+
+        canvas {
+            display: block
+        }
+
+        .screen {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: opacity .4s
+        }
+
+        .screen.hidden {
+            opacity: 0;
+            pointer-events: none
+        }
+
+        #menuScreen {
+            background: linear-gradient(135deg, #0a0a2e, #1a0a3e, #0a1a3e)
+        }
+
+        .menu-title {
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, #f7d452, #ff6b35, #ff3860);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 60px rgba(247, 212, 82, .3);
+            animation: pulse 2s infinite alternate;
+            letter-spacing: 2px
+        }
+
+        .menu-sub {
+            color: #aab;
+            font-size: 1.1rem;
+            margin: 8px 0 30px
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1)
+            }
+
+            100% {
+                transform: scale(1.03)
+            }
+        }
+
+        .btn {
+            padding: 14px 40px;
+            margin: 6px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .25s;
+            min-width: 220px
+        }
+
+        .btn-play {
+            background: linear-gradient(135deg, #f7d452, #ff6b35);
+            color: #1a0a1e;
+            box-shadow: 0 4px 25px rgba(255, 107, 53, .4)
+        }
+
+        .btn-play:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 35px rgba(255, 107, 53, .6)
+        }
+
+        .btn-sec {
+            background: rgba(255, 255, 255, .08);
+            color: #dde;
+            border: 1px solid rgba(255, 255, 255, .12)
+        }
+
+        .btn-sec:hover {
+            background: rgba(255, 255, 255, .15);
+            transform: translateY(-2px)
+        }
+
+        .panel {
+            background: rgba(10, 10, 30, .95);
+            border: 1px solid rgba(255, 255, 255, .1);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto
+        }
+
+        .panel h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #f7d452, #ff6b35);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .panel label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, .06);
+            font-size: .95rem;
+            color: #bbc
+        }
+
+        .panel select,
+        .panel input[type=range] {
+            accent-color: #f7d452;
+            background: rgba(255, 255, 255, .1);
+            border: 1px solid rgba(255, 255, 255, .15);
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 6px
+        }
+
+        .panel select {
+            min-width: 120px
+        }
+
+        .key-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px
+        }
+
+        .key-item {
+            background: rgba(255, 255, 255, .06);
+            padding: 10px 14px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between
+        }
+
+        .key-item span:last-child {
+            color: #f7d452;
+            font-weight: 700
+        }
+
+        .particles {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0
+        }
+
+        #hud {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(180deg, rgba(0, 0, 0, .7), transparent);
+            z-index: 5;
+            pointer-events: none;
+            font-size: .85rem
+        }
+
+        .hud-group {
+            display: flex;
+            gap: 16px;
+            align-items: center
+        }
+
+        .hud-item {
+            display: flex;
+            align-items: center;
+            gap: 5px
+        }
+
+        .hud-bar {
+            width: 80px;
+            height: 8px;
+            background: rgba(255, 255, 255, .15);
+            border-radius: 4px;
+            overflow: hidden
+        }
+
+        .hud-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width .3s
+        }
+
+        .minimap {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            border: 2px solid rgba(255, 255, 255, .2);
+            border-radius: 8px;
+            z-index: 5;
+            background: rgba(0, 0, 0, .6)
+        }
+
+        #pauseScreen,
+        #gameoverScreen,
+        #settingsScreen,
+        #controlsScreen,
+        #leaderboardScreen {
+            background: rgba(5, 5, 20, .92);
+            backdrop-filter: blur(8px)
+        }
+
+        .go-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 16px 0
+        }
+
+        .go-stat {
+            background: rgba(255, 255, 255, .06);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center
+        }
+
+        .go-stat .val {
+            font-size: 1.6rem;
+            font-weight: 900;
+            color: #f7d452
+        }
+
+        .go-stat .lbl {
+            font-size: .75rem;
+            color: #889;
+            margin-top: 4px
+        }
+
+        .lb-list {
+            margin-top: 12px
+        }
+
+        .lb-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin: 3px 0;
+            background: rgba(255, 255, 255, .04)
+        }
+
+        .lb-row:nth-child(1) {
+            background: rgba(247, 212, 82, .15);
+            color: #f7d452
+        }
+
+        .lb-row:nth-child(2) {
+            background: rgba(192, 192, 192, .1);
+            color: #ccc
+        }
+
+        .lb-row:nth-child(3) {
+            background: rgba(205, 127, 50, .1);
+            color: #cd7f32
+        }
+
+        #nameInput {
+            background: rgba(255, 255, 255, .1);
+            border: 1px solid rgba(255, 255, 255, .2);
+            color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 100%;
+            margin: 10px 0;
+            text-align: center
+        }
+
+        .zone-indicator {
+            position: fixed;
+            bottom: 16px;
+            left: 16px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: .9rem;
+            z-index: 5
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <canvas id="minimapCanvas" class="minimap" width="160" height="160" style="display:none"></canvas>
+
+    <div id="hud" style="display:none">
+        <div class="hud-group">
+            <div class="hud-item">🏆 <span id="hudScore">0</span></div>
+            <div class="hud-item">👤 <span id="hudPassenger">None</span></div>
+        </div>
+        <div class="hud-group">
+            <div class="hud-item">⛽ <div class="hud-bar">
+                    <div class="hud-bar-fill" id="hudFuel" style="width:100%;background:#4ade80"></div>
+                </div>
+            </div>
+            <div class="hud-item">⏱️ <span id="hudTimer">180</span>s</div>
+            <div class="hud-item" id="hudPowerup" style="display:none">⚡ <span id="hudPowerupName"></span></div>
+        </div>
+    </div>
+    <div class="zone-indicator" id="zoneIndicator" style="display:none"></div>
+
+    <div class="screen" id="menuScreen">
+        <div class="particles" id="menuParticles"></div>
+        <div style="z-index:1;text-align:center">
+            <div class="menu-title">TIME-SHIFT TAXI</div>
+            <div class="menu-sub">Navigate time zones • Deliver passengers • Beat the clock</div>
+            <button class="btn btn-play" onclick="startGame()">▶ PLAY</button><br>
+            <button class="btn btn-sec" onclick="showScreen('settingsScreen')">⚙ Settings</button><br>
+            <button class="btn btn-sec" onclick="showScreen('controlsScreen')">🎮 Controls</button><br>
+            <button class="btn btn-sec" onclick="showLeaderboard()">🏆 Leaderboard</button>
+        </div>
+    </div>
+
+    <div class="screen hidden" id="settingsScreen">
+        <div class="panel">
+            <h2>⚙ Settings</h2>
+            <label>Control Scheme <select id="ctrlScheme" onchange="settings.controls=this.value">
+                    <option value="both">WASD + Arrows</option>
+                    <option value="wasd">WASD Only</option>
+                    <option value="arrows">Arrows Only</option>
+                </select></label>
+            <label>Difficulty <select id="diffSel" onchange="settings.difficulty=this.value">
+                    <option value="easy">Easy</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="hard">Hard</option>
+                </select></label>
+            <label>SFX Volume <input type="range" id="sfxVol" min="0" max="100" value="70"
+                    onchange="settings.sfxVol=this.value/100"></label>
+            <label>Show Minimap <select id="mmToggle" onchange="settings.minimap=this.value==='on'">
+                    <option value="on">On</option>
+                    <option value="off">Off</option>
+                </select></label>
+            <br><button class="btn btn-sec" onclick="hideScreen('settingsScreen')">← Back</button>
+        </div>
+    </div>
+
+    <div class="screen hidden" id="controlsScreen">
+        <div class="panel">
+            <h2>🎮 Controls</h2>
+            <div class="key-grid">
+                <div class="key-item"><span>Move Up</span><span>W / ↑</span></div>
+                <div class="key-item"><span>Move Down</span><span>S / ↓</span></div>
+                <div class="key-item"><span>Move Left</span><span>A / ←</span></div>
+                <div class="key-item"><span>Move Right</span><span>D / →</span></div>
+                <div class="key-item"><span>Pick Up / Drop Off</span><span>E</span></div>
+                <div class="key-item"><span>Turbo Boost</span><span>SPACE</span></div>
+                <div class="key-item"><span>Freeze Time</span><span>F</span></div>
+                <div class="key-item"><span>Toggle Minimap</span><span>M</span></div>
+                <div class="key-item"><span>Pause</span><span>ESC</span></div>
+            </div>
+            <br><button class="btn btn-sec" onclick="hideScreen('controlsScreen')">← Back</button>
+        </div>
+    </div>
+
+    <div class="screen hidden" id="pauseScreen">
+        <div class="panel" style="text-align:center">
+            <h2>⏸ Paused</h2>
+            <button class="btn btn-play" onclick="resumeGame()">▶ Resume</button><br>
+            <button class="btn btn-sec" onclick="showScreen('settingsScreen')">⚙ Settings</button><br>
+            <button class="btn btn-sec" onclick="quitToMenu()">🚪 Quit to Menu</button>
+        </div>
+    </div>
+
+    <div class="screen hidden" id="gameoverScreen">
+        <div class="panel" style="text-align:center">
+            <h2>🏁 Shift Over!</h2>
+            <div class="go-stats">
+                <div class="go-stat">
+                    <div class="val" id="goScore">0</div>
+                    <div class="lbl">SCORE</div>
+                </div>
+                <div class="go-stat">
+                    <div class="val" id="goDelivered">0</div>
+                    <div class="lbl">DELIVERED</div>
+                </div>
+                <div class="go-stat">
+                    <div class="val" id="goTime">0</div>
+                    <div class="lbl">TIME (s)</div>
+                </div>
+                <div class="go-stat">
+                    <div class="val" id="goBest">0</div>
+                    <div class="lbl">BEST SCORE</div>
+                </div>
+            </div>
+            <input id="nameInput" placeholder="Enter your name..." maxlength="12" value="Player">
+            <button class="btn btn-play" onclick="saveAndRestart()">Save & Play Again</button><br>
+            <button class="btn btn-sec" onclick="saveAndQuit()">Save & Quit</button>
+        </div>
+    </div>
+
+    <div class="screen hidden" id="leaderboardScreen">
+        <div class="panel">
+            <h2>🏆 Leaderboard</h2>
+            <div class="lb-list" id="lbList"></div>
+            <br><button class="btn btn-sec" onclick="hideScreen('leaderboardScreen')">← Back</button>
+        </div>
+    </div>
+
+    <script>
+        // ===== SETTINGS =====
+        const settings = { controls: 'both', difficulty: 'normal', sfxVol: .7, minimap: true };
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const mmCanvas = document.getElementById('minimapCanvas');
+        const mmCtx = mmCanvas.getContext('2d');
+
+        function resize() { canvas.width = innerWidth; canvas.height = innerHeight }
+        resize(); addEventListener('resize', resize);
+
+        // ===== SCREEN MANAGEMENT =====
+        function showScreen(id) { document.getElementById(id).classList.remove('hidden') }
+        function hideScreen(id) { document.getElementById(id).classList.add('hidden') }
+
+        // ===== MENU PARTICLES =====
+        const menuParts = [];
+        for (let i = 0; i < 60; i++)menuParts.push({ x: Math.random() * innerWidth, y: Math.random() * innerHeight, vx: (Math.random() - .5) * .5, vy: (Math.random() - .5) * .5, r: Math.random() * 3 + 1, c: `hsla(${Math.random() * 60 + 20},.8,.6,${Math.random() * .4 + .1})` });
+        function drawMenuParticles() { const c = document.createElement('canvas'); c.width = innerWidth; c.height = innerHeight; const x = c.getContext('2d'); x.clearRect(0, 0, c.width, c.height); menuParts.forEach(p => { p.x += p.vx; p.y += p.vy; if (p.x < 0) p.x = c.width; if (p.x > c.width) p.x = 0; if (p.y < 0) p.y = c.height; if (p.y > c.height) p.y = 0; x.beginPath(); x.arc(p.x, p.y, p.r, 0, Math.PI * 2); x.fillStyle = p.c; x.fill() }); document.getElementById('menuParticles').style.background = `url(${c.toDataURL()})` }
+        setInterval(drawMenuParticles, 50);
+
+        // ===== AUDIO (Web Audio API) =====
+        let audioCtx;
+        function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)() }
+        function playTone(freq, dur, type = 'square', vol = .15) {
+            if (!audioCtx) return;
+            const g = audioCtx.createGain(), o = audioCtx.createOscillator();
+            o.type = type; o.frequency.value = freq; g.gain.value = vol * settings.sfxVol;
+            o.connect(g); g.connect(audioCtx.destination); o.start();
+            g.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + dur);
+            o.stop(audioCtx.currentTime + dur);
+        }
+        function sfxPickup() { playTone(523, .1, 'sine'); setTimeout(() => playTone(659, .1, 'sine'), 100); setTimeout(() => playTone(784, .15, 'sine'), 200) }
+        function sfxDeliver() { playTone(523, .08, 'sine'); setTimeout(() => playTone(659, .08, 'sine'), 80); setTimeout(() => playTone(784, .08, 'sine'), 160); setTimeout(() => playTone(1047, .2, 'sine'), 240) }
+        function sfxHit() { playTone(120, .3, 'sawtooth', .2) }
+        function sfxPowerup() { playTone(440, .1, 'triangle'); setTimeout(() => playTone(880, .15, 'triangle'), 120) }
+        function sfxExpire() { playTone(330, .2, 'sawtooth', .15); setTimeout(() => playTone(220, .3, 'sawtooth', .15), 200) }
+
+        // ===== GAME STATE =====
+        const TILE = 48, ROAD_C = '#2a2a3e', BLDG_COLORS = ['#1a1a3a', '#22224a', '#1e1e44', '#262650'];
+        let world = { w: 0, h: 0, grid: [], zones: [] };
+        let taxi = { x: 0, y: 0, w: 28, h: 28, speed: 0, maxSpeed: 3.5, angle: 0, vx: 0, vy: 0, stun: 0 };
+        let passengers = [], currentPax = null, destination = null;
+        let obstacles = [], powerups = [];
+        let score = 0, fuel = 100, shiftTimer = 180, delivered = 0, gameTime = 0;
+        let activePower = { turbo: 0, freeze: 0 };
+        let keys = {}, paused = false, running = false;
+
+        // Difficulty settings
+        const DIFF = { easy: { timer: 240, fuel: 120, paxPatience: 1.2, obstacleSpeed: .6, spawnRate: .7 }, normal: { timer: 180, fuel: 100, paxPatience: 1, obstacleSpeed: 1, spawnRate: 1 }, hard: { timer: 120, fuel: 80, paxPatience: .7, obstacleSpeed: 1.4, spawnRate: 1.4 } };
+
+        // ===== WORLD GENERATION =====
+        function genWorld() {
+            const cols = 40, rows = 40; world.w = cols * TILE; world.h = rows * TILE; world.grid = []; world.zones = [];
+            // 0=building,1=road
+            for (let y = 0; y < rows; y++) {
+                world.grid[y] = []; for (let x = 0; x < cols; x++) {
+                    const isRoadH = y % 5 === 2 || y % 5 === 3, isRoadV = x % 5 === 2 || x % 5 === 3;
+                    world.grid[y][x] = (isRoadH || isRoadV) ? 1 : 0;
+                }
+            }
+            // Time zones
+            const zoneCount = 12 + Math.floor(Math.random() * 8);
+            for (let i = 0; i < zoneCount; i++) {
+                const types = ['red', 'blue', 'green'];
+                world.zones.push({ x: Math.floor(Math.random() * (cols - 6)) * TILE, y: Math.floor(Math.random() * (rows - 6)) * TILE, w: (3 + Math.floor(Math.random() * 4)) * TILE, h: (3 + Math.floor(Math.random() * 4)) * TILE, type: types[Math.floor(Math.random() * 3)] });
+            }
+        }
+
+        function findRoad() {
+            for (let y = 0; y < world.grid.length; y++)for (let x = 0; x < world.grid[0].length; x++)if (world.grid[y][x] === 1) return { x: x * TILE + TILE / 2, y: y * TILE + TILE / 2 };
+            return { x: TILE * 3, y: TILE * 3 };
+        }
+
+        function isRoad(px, py) {
+            const gx = Math.floor(px / TILE), gy = Math.floor(py / TILE);
+            if (gx < 0 || gy < 0 || gy >= world.grid.length || gx >= world.grid[0].length) return false;
+            return world.grid[gy][gx] === 1;
+        }
+
+        function getZone(px, py) {
+            for (const z of world.zones) if (px >= z.x && px <= z.x + z.w && py >= z.y && py <= z.y + z.h) return z;
+            return null;
+        }
+
+        function getTimeMult(px, py) {
+            const z = getZone(px, py);
+            if (!z) return 1;
+            return z.type === 'red' ? .5 : z.type === 'blue' ? 2 : 1;
+        }
+
+        // ===== SPAWN SYSTEMS =====
+        function spawnPassenger() {
+            if (passengers.length >= 5) return;
+            let tries = 0, pos;
+            do { pos = { x: Math.floor(Math.random() * world.grid[0].length), y: Math.floor(Math.random() * world.grid.length) }; tries++ } while ((!world.grid[pos.y] || world.grid[pos.y][pos.x] !== 1) && tries < 100);
+            if (tries >= 100) return;
+            let dest; tries = 0;
+            do { dest = { x: Math.floor(Math.random() * world.grid[0].length), y: Math.floor(Math.random() * world.grid.length) }; tries++ } while ((!world.grid[dest.y] || world.grid[dest.y][dest.x] !== 1 || Math.abs(dest.x - pos.x) + Math.abs(dest.y - pos.y) < 8) && tries < 100);
+            if (tries >= 100) return;
+            const d = DIFF[settings.difficulty];
+            passengers.push({ x: pos.x * TILE + TILE / 2, y: pos.y * TILE + TILE / 2, destX: dest.x * TILE + TILE / 2, destY: dest.y * TILE + TILE / 2, patience: 100, maxPatience: 100, decayRate: .8 / d.paxPatience, bonus: Math.floor(Math.random() * 200) + 100 });
+        }
+
+        function spawnObstacle() {
+            const d = DIFF[settings.difficulty]; if (obstacles.length >= 15) return;
+            let tries = 0, pos;
+            do { pos = { x: Math.floor(Math.random() * world.grid[0].length), y: Math.floor(Math.random() * world.grid.length) }; tries++ } while ((!world.grid[pos.y] || world.grid[pos.y][pos.x] !== 1) && tries < 50);
+            if (tries >= 50) return;
+            const types = ['car', 'pedestrian', 'pothole'];
+            const type = types[Math.floor(Math.random() * 3)];
+            const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+            const dir = type !== 'pothole' ? dirs[Math.floor(Math.random() * 4)] : [0, 0];
+            const spd = type === 'car' ? 1.5 * d.obstacleSpeed : type === 'pedestrian' ? .6 * d.obstacleSpeed : 0;
+            obstacles.push({ x: pos.x * TILE + TILE / 2, y: pos.y * TILE + TILE / 2, type, dx: dir[0] * spd, dy: dir[1] * spd, w: type === 'car' ? 24 : type === 'pedestrian' ? 12 : 20, h: type === 'car' ? 24 : type === 'pedestrian' ? 12 : 20, life: 600 + Math.random() * 400 });
+        }
+
+        function spawnPowerup() {
+            if (powerups.length >= 3) return;
+            let tries = 0, pos;
+            do { pos = { x: Math.floor(Math.random() * world.grid[0].length), y: Math.floor(Math.random() * world.grid.length) }; tries++ } while ((!world.grid[pos.y] || world.grid[pos.y][pos.x] !== 1) && tries < 50);
+            if (tries >= 50) return;
+            powerups.push({ x: pos.x * TILE + TILE / 2, y: pos.y * TILE + TILE / 2, type: Math.random() > .5 ? 'turbo' : 'freeze', life: 500 });
+        }
+
+        // ===== INPUT =====
+        addEventListener('keydown', e => {
+            keys[e.key.toLowerCase()] = true; keys[e.code] = true;
+            if (e.key === 'Escape') { if (running && !paused) pauseGame(); else if (paused) resumeGame(); }
+            if (e.key.toLowerCase() === 'e' && running && !paused) tryPickupDrop();
+            if (e.key === ' ' && running && !paused) { e.preventDefault(); activateTurbo(); }
+            if (e.key.toLowerCase() === 'f' && running && !paused) activateFreeze();
+            if (e.key.toLowerCase() === 'm' && running) toggleMinimap();
+        });
+        addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; keys[e.code] = false });
+
+        function getInput() {
+            let dx = 0, dy = 0; const s = settings.controls;
+            if (s === 'both' || s === 'wasd') { if (keys['w']) dy = -1; if (keys['s']) dy = 1; if (keys['a']) dx = -1; if (keys['d']) dx = 1 }
+            if (s === 'both' || s === 'arrows') { if (keys['ArrowUp'] || keys['arrowup']) dy = -1; if (keys['ArrowDown'] || keys['arrowdown']) dy = 1; if (keys['ArrowLeft'] || keys['arrowleft']) dx = -1; if (keys['ArrowRight'] || keys['arrowright']) dx = 1 }
+            return { dx, dy };
+        }
+
+        // ===== ACTIONS =====
+        function tryPickupDrop() {
+            if (currentPax) {
+                const dist = Math.hypot(taxi.x - currentPax.destX, taxi.y - currentPax.destY);
+                if (dist < TILE * 1.5) {
+                    const timeBonus = Math.floor(currentPax.patience * 2);
+                    score += currentPax.bonus + timeBonus; delivered++;
+                    sfxDeliver(); currentPax = null; destination = null;
+                }
+                return;
+            }
+            for (let i = passengers.length - 1; i >= 0; i--) {
+                const p = passengers[i], dist = Math.hypot(taxi.x - p.x, taxi.y - p.y);
+                if (dist < TILE) { currentPax = p; destination = { x: p.destX, y: p.destY }; passengers.splice(i, 1); sfxPickup(); return; }
+            }
+        }
+
+        function activateTurbo() { if (activePower.turbo <= 0 && fuel > 10) { activePower.turbo = 180; fuel -= 8; sfxPowerup() } }
+        function activateFreeze() { if (activePower.freeze <= 0) { activePower.freeze = 240; sfxPowerup() } }
+        function toggleMinimap() { settings.minimap = !settings.minimap; mmCanvas.style.display = settings.minimap ? 'block' : 'none' }
+
+        // ===== GAME LOOP =====
+        function startGame() {
+            initAudio(); hideScreen('menuScreen');
+            document.getElementById('hud').style.display = 'flex';
+            document.getElementById('zoneIndicator').style.display = 'block';
+            if (settings.minimap) mmCanvas.style.display = 'block';
+            const d = DIFF[settings.difficulty];
+            genWorld();
+            const sp = findRoad(); taxi.x = sp.x; taxi.y = sp.y; taxi.vx = 0; taxi.vy = 0; taxi.stun = 0;
+            passengers = []; obstacles = []; powerups = []; currentPax = null; destination = null;
+            score = 0; fuel = d.fuel; shiftTimer = d.timer; delivered = 0; gameTime = 0;
+            activePower = { turbo: 0, freeze: 0 }; paused = false; running = true;
+            for (let i = 0; i < 3; i++)spawnPassenger();
+            for (let i = 0; i < 6; i++)spawnObstacle();
+            spawnPowerup();
+            requestAnimationFrame(gameLoop);
+        }
+
+        let lastTime = 0;
+        function gameLoop(ts) {
+            if (!running) return;
+            if (!lastTime) lastTime = ts;
+            const rawDt = Math.min((ts - lastTime) / 1000, 0.05); lastTime = ts;
+            if (paused) { requestAnimationFrame(gameLoop); return }
+            const timeMult = getTimeMult(taxi.x, taxi.y);
+            const dt = rawDt * timeMult;
+
+            // Update
+            updateTaxi(dt, rawDt, timeMult);
+            updatePassengers(rawDt);
+            updateObstacles(dt, rawDt);
+            updatePowerups(rawDt);
+            shiftTimer -= rawDt; fuel -= rawDt * .8;
+            gameTime += rawDt;
+            if (activePower.turbo > 0) activePower.turbo--;
+            if (activePower.freeze > 0) activePower.freeze--;
+
+            // Spawning
+            if (Math.random() < .008 * DIFF[settings.difficulty].spawnRate) spawnPassenger();
+            if (Math.random() < .012 * DIFF[settings.difficulty].spawnRate) spawnObstacle();
+            if (Math.random() < .003) spawnPowerup();
+
+            // Check end
+            if (shiftTimer <= 0 || fuel <= 0) { endGame(); return }
+
+            // Render
+            render(timeMult);
+            updateHUD(timeMult);
+            if (settings.minimap) renderMinimap();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function updateTaxi(dt, rawDt, timeMult) {
+            if (taxi.stun > 0) { taxi.stun -= rawDt; taxi.vx *= .9; taxi.vy *= .9; }
+            else {
+                const inp = getInput();
+                const accel = .25 * (activePower.turbo > 0 ? 2.2 : 1);
+                taxi.vx += inp.dx * accel; taxi.vy += inp.dy * accel;
+            }
+            const maxSpd = taxi.maxSpeed * (activePower.turbo > 0 ? 2 : 1) * timeMult;
+            const spd = Math.hypot(taxi.vx, taxi.vy);
+            if (spd > maxSpd) { taxi.vx *= maxSpd / spd; taxi.vy *= maxSpd / spd }
+            taxi.vx *= .92; taxi.vy *= .92;
+            const nx = taxi.x + taxi.vx, ny = taxi.y + taxi.vy;
+            if (isRoad(nx, taxi.y)) taxi.x = nx;
+            if (isRoad(taxi.x, ny)) taxi.y = ny;
+            taxi.x = Math.max(taxi.w / 2, Math.min(world.w - taxi.w / 2, taxi.x));
+            taxi.y = Math.max(taxi.h / 2, Math.min(world.h - taxi.h / 2, taxi.y));
+            if (Math.abs(taxi.vx) > .1 || Math.abs(taxi.vy) > .1) taxi.angle = Math.atan2(taxi.vy, taxi.vx);
+            // Powerup collection
+            for (let i = powerups.length - 1; i >= 0; i--) {
+                const pw = powerups[i];
+                if (Math.hypot(taxi.x - pw.x, taxi.y - pw.y) < TILE * .6) {
+                    if (pw.type === 'turbo') activePower.turbo = 240; else activePower.freeze = 300;
+                    sfxPowerup(); powerups.splice(i, 1);
+                }
+            }
+            // Obstacle collision
+            for (const o of obstacles) {
+                if (Math.hypot(taxi.x - o.x, taxi.y - o.y) < (taxi.w + o.w) / 2 * .7) {
+                    if (taxi.stun <= 0) { score = Math.max(0, score - 25); taxi.stun = .8; sfxHit(); taxi.vx *= -.3; taxi.vy *= -.3 }
+                }
+            }
+        }
+
+        function updatePassengers(rawDt) {
+            const freezeActive = activePower.freeze > 0;
+            for (let i = passengers.length - 1; i >= 0; i--) {
+                const p = passengers[i];
+                if (!freezeActive) {
+                    const zm = getTimeMult(p.x, p.y);
+                    p.patience -= p.decayRate * rawDt * (zm > 1 ? zm : 1);
+                }
+                if (p.patience <= 0) { passengers.splice(i, 1); sfxExpire() }
+            }
+            if (currentPax && !freezeActive) {
+                const zm = getTimeMult(taxi.x, taxi.y);
+                currentPax.patience -= currentPax.decayRate * rawDt * (zm > 1 ? zm : 1);
+                if (currentPax.patience <= 0) { currentPax = null; destination = null; score = Math.max(0, score - 50); sfxExpire() }
+            }
+        }
+
+        function updateObstacles(dt, rawDt) {
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const o = obstacles[i]; o.life -= 1;
+                if (o.life <= 0) { obstacles.splice(i, 1); continue }
+                if (o.type !== 'pothole') {
+                    const tm = getTimeMult(o.x, o.y);
+                    const nx = o.x + o.dx * tm, ny = o.y + o.dy * tm;
+                    if (isRoad(nx, ny)) { o.x = nx; o.y = ny } else { o.dx *= -1; o.dy *= -1 }
+                }
+            }
+        }
+
+        function updatePowerups(rawDt) { for (let i = powerups.length - 1; i >= 0; i--) { powerups[i].life -= 1; if (powerups[i].life <= 0) powerups.splice(i, 1) } }
+
+        // ===== RENDERING =====
+        function render(timeMult) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const camX = taxi.x - canvas.width / 2, camY = taxi.y - canvas.height / 2;
+            ctx.save(); ctx.translate(-camX, -camY);
+
+            // Tiles
+            const startCol = Math.max(0, Math.floor(camX / TILE)), endCol = Math.min(world.grid[0].length, Math.ceil((camX + canvas.width) / TILE) + 1);
+            const startRow = Math.max(0, Math.floor(camY / TILE)), endRow = Math.min(world.grid.length, Math.ceil((camY + canvas.height) / TILE) + 1);
+            for (let y = startRow; y < endRow; y++)for (let x = startCol; x < endCol; x++) {
+                if (world.grid[y][x] === 1) {
+                    ctx.fillStyle = ROAD_C; ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
+                    ctx.strokeStyle = '#333348'; ctx.lineWidth = .5; ctx.strokeRect(x * TILE, y * TILE, TILE, TILE);
+                    // Road lines
+                    if (y % 5 === 2) { ctx.strokeStyle = '#555570'; ctx.setLineDash([6, 8]); ctx.beginPath(); ctx.moveTo(x * TILE, y * TILE + TILE); ctx.lineTo(x * TILE + TILE, y * TILE + TILE); ctx.stroke(); ctx.setLineDash([]) }
+                } else {
+                    ctx.fillStyle = BLDG_COLORS[(x * 7 + y * 13) % BLDG_COLORS.length]; ctx.fillRect(x * TILE + 2, y * TILE + 2, TILE - 4, TILE - 4);
+                    // Windows
+                    ctx.fillStyle = 'rgba(255,255,150,.15)'; for (let wy = 6; wy < TILE - 6; wy += 10)for (let wx = 6; wx < TILE - 6; wx += 10) { if (Math.sin(x * 3 + y * 7 + wx + wy) > .3) ctx.fillRect(x * TILE + wx, y * TILE + wy, 5, 5) }
+                }
+            }
+
+            // Zones
+            ctx.globalAlpha = .12 + Math.sin(Date.now() / 500) * .04;
+            for (const z of world.zones) {
+                ctx.fillStyle = z.type === 'red' ? '#ff3860' : z.type === 'blue' ? '#3b82f6' : '#22c55e';
+                ctx.fillRect(z.x, z.y, z.w, z.h);
+                ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 2; ctx.globalAlpha = .3; ctx.strokeRect(z.x, z.y, z.w, z.h); ctx.globalAlpha = .12 + Math.sin(Date.now() / 500) * .04;
+            }
+            ctx.globalAlpha = 1;
+
+            // Powerups
+            const pFlash = Math.sin(Date.now() / 200) * .3 + .7;
+            powerups.forEach(pw => {
+                ctx.save(); ctx.translate(pw.x, pw.y);
+                ctx.fillStyle = pw.type === 'turbo' ? `rgba(247,212,82,${pFlash})` : `rgba(100,200,255,${pFlash})`;
+                ctx.shadowColor = pw.type === 'turbo' ? '#f7d452' : '#64c8ff'; ctx.shadowBlur = 12;
+                ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(7, 4); ctx.lineTo(2, 4); ctx.lineTo(4, 12); ctx.lineTo(-3, 2); ctx.lineTo(1, 2); ctx.closePath(); ctx.fill();
+                ctx.restore();
+            });
+
+            // Passengers
+            passengers.forEach(p => {
+                ctx.save(); ctx.translate(p.x, p.y);
+                const pRatio = p.patience / p.maxPatience;
+                ctx.fillStyle = pRatio > .5 ? '#22c55e' : pRatio > .25 ? '#eab308' : '#ef4444';
+                ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 8;
+                ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#fff'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('👤', 0, 4);
+                // Patience bar
+                ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(-12, -18, 24, 4);
+                ctx.fillStyle = pRatio > .5 ? '#22c55e' : pRatio > .25 ? '#eab308' : '#ef4444';
+                ctx.fillRect(-12, -18, 24 * pRatio, 4);
+                ctx.restore();
+            });
+
+            // Destination marker
+            if (destination) {
+                ctx.save(); ctx.translate(destination.x, destination.y);
+                const bob = Math.sin(Date.now() / 300) * 4;
+                ctx.fillStyle = 'rgba(247,212,82,.3)'; ctx.beginPath(); ctx.arc(0, 0, TILE * .6 + Math.sin(Date.now() / 400) * 4, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#f7d452'; ctx.shadowColor = '#f7d452'; ctx.shadowBlur = 10;
+                ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('📍', 0, 4 + bob);
+                ctx.restore();
+            }
+
+            // Obstacles
+            obstacles.forEach(o => {
+                ctx.save(); ctx.translate(o.x, o.y);
+                if (o.type === 'car') { ctx.fillStyle = '#6366f1'; ctx.shadowColor = '#6366f1'; ctx.shadowBlur = 4; ctx.fillRect(-12, -12, 24, 24); ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(-8, -8, 6, 6); ctx.fillRect(2, -8, 6, 6) }
+                else if (o.type === 'pedestrian') { ctx.fillStyle = '#f472b6'; ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI * 2); ctx.fill() }
+                else { ctx.fillStyle = '#78350f'; ctx.beginPath(); ctx.ellipse(0, 0, 10, 8, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(0, 0, 7, 5, 0, 0, Math.PI * 2); ctx.fill() }
+                ctx.restore();
+            });
+
+            // Taxi
+            ctx.save(); ctx.translate(taxi.x, taxi.y); ctx.rotate(taxi.angle);
+            if (taxi.stun > 0) { ctx.globalAlpha = .5 + Math.sin(Date.now() / 50) * .3 }
+            // Turbo trail
+            if (activePower.turbo > 0) { ctx.fillStyle = 'rgba(247,180,50,.4)'; ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(-28, -8); ctx.lineTo(-24, 0); ctx.lineTo(-28, 8); ctx.closePath(); ctx.fill() }
+            // Body
+            const grad = ctx.createLinearGradient(-14, 0, 14, 0);
+            grad.addColorStop(0, '#f59e0b'); grad.addColorStop(1, '#f7d452');
+            ctx.fillStyle = grad; ctx.shadowColor = '#f7d452'; ctx.shadowBlur = activePower.turbo > 0 ? 15 : 6;
+            ctx.beginPath(); ctx.roundRect(-14, -10, 28, 20, 4); ctx.fill();
+            // Windshield
+            ctx.fillStyle = 'rgba(100,200,255,.5)'; ctx.fillRect(6, -7, 5, 14);
+            // Wheels
+            ctx.fillStyle = '#333'; ctx.fillRect(-12, -12, 8, 3); ctx.fillRect(-12, 9, 8, 3); ctx.fillRect(4, -12, 8, 3); ctx.fillRect(4, 9, 8, 3);
+            // Taxi sign
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 6px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('TAXI', 0, 3);
+            ctx.restore();
+
+            // Freeze effect
+            if (activePower.freeze > 0) { ctx.fillStyle = `rgba(100,200,255,${.05 + Math.sin(Date.now() / 300) * .03})`; ctx.fillRect(camX, camY, canvas.width, canvas.height) }
+
+            ctx.restore();
+
+            // Zone tint overlay
+            const zone = getZone(taxi.x, taxi.y);
+            if (zone) {
+                ctx.fillStyle = zone.type === 'red' ? 'rgba(255,56,96,.06)' : zone.type === 'blue' ? 'rgba(59,130,246,.06)' : 'rgba(34,197,94,.04)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        function renderMinimap() {
+            mmCtx.fillStyle = 'rgba(10,10,30,.9)'; mmCtx.fillRect(0, 0, 160, 160);
+            const scale = 160 / world.w;
+            // Zones
+            world.zones.forEach(z => { mmCtx.fillStyle = z.type === 'red' ? 'rgba(255,56,96,.3)' : z.type === 'blue' ? 'rgba(59,130,246,.3)' : 'rgba(34,197,94,.25)'; mmCtx.fillRect(z.x * scale, z.y * scale, z.w * scale, z.h * scale) });
+            // Roads hint
+            mmCtx.fillStyle = 'rgba(255,255,255,.05)';
+            for (let y = 0; y < world.grid.length; y++)for (let x = 0; x < world.grid[0].length; x++)if (world.grid[y][x] === 1) mmCtx.fillRect(x * TILE * scale, y * TILE * scale, TILE * scale, TILE * scale);
+            // Passengers
+            passengers.forEach(p => { mmCtx.fillStyle = '#22c55e'; mmCtx.fillRect(p.x * scale - 1, p.y * scale - 1, 3, 3) });
+            // Destination
+            if (destination) { mmCtx.fillStyle = '#f7d452'; mmCtx.fillRect(destination.x * scale - 2, destination.y * scale - 2, 5, 5) }
+            // Powerups
+            powerups.forEach(pw => { mmCtx.fillStyle = pw.type === 'turbo' ? '#f7d452' : '#64c8ff'; mmCtx.fillRect(pw.x * scale - 1, pw.y * scale - 1, 3, 3) });
+            // Taxi
+            mmCtx.fillStyle = '#ff6b35'; mmCtx.fillRect(taxi.x * scale - 2, taxi.y * scale - 2, 5, 5);
+        }
+
+        function updateHUD(timeMult) {
+            document.getElementById('hudScore').textContent = score;
+            document.getElementById('hudTimer').textContent = Math.max(0, Math.ceil(shiftTimer));
+            const fuelPct = Math.max(0, fuel / DIFF[settings.difficulty].fuel * 100);
+            const fuelBar = document.getElementById('hudFuel');
+            fuelBar.style.width = fuelPct + '%';
+            fuelBar.style.background = fuelPct > 50 ? '#4ade80' : fuelPct > 25 ? '#eab308' : '#ef4444';
+            document.getElementById('hudPassenger').textContent = currentPax ? `🧑 ${Math.ceil(currentPax.patience)}%` : 'None';
+            const puDiv = document.getElementById('hudPowerup');
+            if (activePower.turbo > 0) { puDiv.style.display = 'flex'; document.getElementById('hudPowerupName').textContent = 'TURBO!' }
+            else if (activePower.freeze > 0) { puDiv.style.display = 'flex'; document.getElementById('hudPowerupName').textContent = 'FREEZE!' }
+            else puDiv.style.display = 'none';
+            // Zone indicator
+            const zi = document.getElementById('zoneIndicator');
+            const zone = getZone(taxi.x, taxi.y);
+            if (zone) { zi.style.display = 'block'; zi.textContent = zone.type === 'red' ? '🔴 SLOW ZONE' : zone.type === 'blue' ? '🔵 FAST ZONE' : '🟢 NORMAL ZONE'; zi.style.background = zone.type === 'red' ? 'rgba(255,56,96,.25)' : zone.type === 'blue' ? 'rgba(59,130,246,.25)' : 'rgba(34,197,94,.2)'; zi.style.borderLeft = `3px solid ${zone.type === 'red' ? '#ff3860' : zone.type === 'blue' ? '#3b82f6' : '#22c55e'}` }
+            else { zi.textContent = '🟢 NORMAL'; zi.style.background = 'rgba(34,197,94,.15)'; zi.style.borderLeft = '3px solid #22c55e' }
+        }
+
+        // ===== GAME STATE TRANSITIONS =====
+        function pauseGame() { paused = true; showScreen('pauseScreen') }
+        function resumeGame() { paused = false; hideScreen('pauseScreen'); hideScreen('settingsScreen') }
+        function quitToMenu() {
+            running = false; paused = false; hideScreen('pauseScreen'); hideScreen('settingsScreen');
+            document.getElementById('hud').style.display = 'none'; mmCanvas.style.display = 'none'; document.getElementById('zoneIndicator').style.display = 'none';
+            showScreen('menuScreen')
+        }
+
+        function endGame() {
+            running = false;
+            document.getElementById('goScore').textContent = score;
+            document.getElementById('goDelivered').textContent = delivered;
+            document.getElementById('goTime').textContent = Math.floor(gameTime);
+            const lb = JSON.parse(localStorage.getItem('tst_lb') || '[]');
+            const best = lb.length ? Math.max(score, ...lb.map(e => e.score)) : score;
+            document.getElementById('goBest').textContent = best;
+            showScreen('gameoverScreen');
+        }
+
+        function saveScore(name, sc) {
+            const lb = JSON.parse(localStorage.getItem('tst_lb') || '[]');
+            lb.push({ name: name || 'Player', score: sc, delivered, time: Math.floor(gameTime), date: new Date().toLocaleDateString() });
+            lb.sort((a, b) => b.score - a.score);
+            if (lb.length > 10) lb.length = 10;
+            localStorage.setItem('tst_lb', JSON.stringify(lb));
+        }
+
+        function saveAndRestart() {
+            const name = document.getElementById('nameInput').value.trim() || 'Player';
+            saveScore(name, score); hideScreen('gameoverScreen'); startGame();
+        }
+
+        function saveAndQuit() {
+            const name = document.getElementById('nameInput').value.trim() || 'Player';
+            saveScore(name, score); hideScreen('gameoverScreen'); quitToMenu();
+        }
+
+        function showLeaderboard() {
+            const lb = JSON.parse(localStorage.getItem('tst_lb') || '[]');
+            const list = document.getElementById('lbList');
+            list.innerHTML = lb.length ? lb.map((e, i) => `<div class="lb-row"><span>${i + 1}. ${e.name}</span><span>${e.score} pts</span></div>`).join('') : '<p style="color:#889;text-align:center">No scores yet. Play a game!</p>';
+            showScreen('leaderboardScreen');
+        }
+    </script>
+</body>
+
+</html>
