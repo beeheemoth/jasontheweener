@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Pixel Garden — JasontheWeener</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #070b10;
+            color: #e1e1e6;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        /* HUD */
+        .hud {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 18px;
+            background: rgba(10, 12, 18, .92);
+            border-bottom: 1px solid rgba(34, 197, 94, .2);
+            backdrop-filter: blur(10px);
+            z-index: 5
+        }
+
+        .hud-left {
+            display: flex;
+            align-items: center;
+            gap: 14px
+        }
+
+        .hud-stat {
+            font-size: .8rem;
+            font-weight: 600;
+            color: #888
+        }
+
+        .hud-stat span {
+            font-weight: 800
+        }
+
+        .gold span {
+            color: #eab308
+        }
+
+        .xp span {
+            color: #8b5cf6
+        }
+
+        .level span {
+            color: #22c55e
+        }
+
+        .season-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: .7rem;
+            font-weight: 700
+        }
+
+        /* Main layout */
+        .game-layout {
+            flex: 1;
+            display: flex;
+            overflow: hidden
+        }
+
+        /* Garden */
+        .garden-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden
+        }
+
+        /* Sky */
+        .sky {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            transition: background 2s
+        }
+
+        .sky.day {
+            background: linear-gradient(180deg, #0c1a2e 0%, #132846 40%, #1a3a5c 70%, #1e4a3a 100%)
+        }
+
+        .sky.sunset {
+            background: linear-gradient(180deg, #1a1030 0%, #3d1a4a 30%, #6b2040 60%, #1e3a2a 100%)
+        }
+
+        .sky.night {
+            background: linear-gradient(180deg, #050510 0%, #0a0a1a 50%, #101820 100%)
+        }
+
+        .stars {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none
+        }
+
+        .star {
+            position: absolute;
+            border-radius: 50%;
+            background: #fff;
+            animation: twinkle linear infinite alternate
+        }
+
+        @keyframes twinkle {
+            0% {
+                opacity: .2
+            }
+
+            100% {
+                opacity: .8
+            }
+        }
+
+        /* Weather */
+        .rain-drop {
+            position: absolute;
+            width: 2px;
+            background: linear-gradient(transparent, rgba(100, 180, 255, .5));
+            z-index: 3;
+            animation: rain linear infinite;
+            pointer-events: none
+        }
+
+        @keyframes rain {
+            0% {
+                transform: translateY(-20px)
+            }
+
+            100% {
+                transform: translateY(100vh)
+            }
+        }
+
+        /* Garden Grid */
+        .garden-grid {
+            display: grid;
+            gap: 4px;
+            z-index: 2;
+            padding: 10px
+        }
+
+        .plot {
+            width: 72px;
+            height: 72px;
+            border-radius: 10px;
+            border: 2px solid rgba(34, 197, 94, .15);
+            background: rgba(20, 40, 25, .6);
+            cursor: pointer;
+            transition: .2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            user-select: none
+        }
+
+        .plot:hover {
+            border-color: rgba(34, 197, 94, .5);
+            background: rgba(25, 50, 30, .7)
+        }
+
+        .plot.watered {
+            background: rgba(30, 60, 40, .7);
+            box-shadow: inset 0 0 10px rgba(59, 130, 246, .15)
+        }
+
+        .plot .plant-emoji {
+            font-size: 1.8rem;
+            transition: transform .2s;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .3))
+        }
+
+        .plot .plant-emoji.bounce {
+            animation: plantBounce .3s ease-out
+        }
+
+        @keyframes plantBounce {
+            0% {
+                transform: scale(1)
+            }
+
+            50% {
+                transform: scale(1.25)
+            }
+
+            100% {
+                transform: scale(1)
+            }
+        }
+
+        .plot .progress-bar {
+            position: absolute;
+            bottom: 4px;
+            left: 6px;
+            right: 6px;
+            height: 3px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, .1)
+        }
+
+        .plot .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #22c55e, #86efac);
+            transition: width .3s
+        }
+
+        .plot .ready-glow {
+            position: absolute;
+            inset: -2px;
+            border-radius: 12px;
+            border: 2px solid #eab308;
+            box-shadow: 0 0 12px rgba(234, 179, 8, .3);
+            animation: glowPulse 1.5s ease-in-out infinite
+        }
+
+        @keyframes glowPulse {
+
+            0%,
+            100% {
+                opacity: .5
+            }
+
+            50% {
+                opacity: 1
+            }
+        }
+
+        .plot .water-icon {
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            font-size: .6rem;
+            opacity: .6
+        }
+
+        /* Float text */
+        .float {
+            position: fixed;
+            font-weight: 900;
+            pointer-events: none;
+            z-index: 20;
+            animation: floatUp .9s ease-out forwards
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1)
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-60px) scale(1.2)
+            }
+        }
+
+        /* Shop */
+        .shop {
+            width: 300px;
+            background: rgba(10, 12, 18, .95);
+            border-left: 1px solid rgba(34, 197, 94, .12);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden
+        }
+
+        .shop-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(255, 255, 255, .05)
+        }
+
+        .shop-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            font-size: .75rem;
+            font-weight: 700;
+            color: #555;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-family: 'Outfit', sans-serif;
+            border-bottom: 2px solid transparent;
+            transition: .2s
+        }
+
+        .shop-tab.active {
+            color: #22c55e;
+            border-bottom-color: #22c55e
+        }
+
+        .shop-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px
+        }
+
+        .shop-list::-webkit-scrollbar {
+            width: 4px
+        }
+
+        .shop-list::-webkit-scrollbar-thumb {
+            background: rgba(34, 197, 94, .2);
+            border-radius: 4px
+        }
+
+        .shop-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .02);
+            border: 1px solid rgba(255, 255, 255, .05);
+            margin-bottom: 5px;
+            cursor: pointer;
+            transition: .2s
+        }
+
+        .shop-item:hover {
+            border-color: rgba(34, 197, 94, .3);
+            background: rgba(34, 197, 94, .04)
+        }
+
+        .shop-item.cant-afford {
+            opacity: .4
+        }
+
+        .shop-item.selected {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, .08)
+        }
+
+        .si-icon {
+            font-size: 1.4rem;
+            width: 30px;
+            text-align: center
+        }
+
+        .si-info {
+            flex: 1
+        }
+
+        .si-name {
+            font-size: .78rem;
+            font-weight: 700;
+            color: #ddd
+        }
+
+        .si-desc {
+            font-size: .62rem;
+            color: #666
+        }
+
+        .si-cost {
+            font-size: .7rem;
+            color: #eab308;
+            font-weight: 600
+        }
+
+        /* Tool selector */
+        .tools-bar {
+            display: flex;
+            gap: 4px;
+            padding: 8px;
+            border-top: 1px solid rgba(255, 255, 255, .05);
+            justify-content: center
+        }
+
+        .tool-btn {
+            padding: 8px 12px;
+            border: 2px solid rgba(255, 255, 255, .08);
+            border-radius: 8px;
+            background: transparent;
+            font-size: .9rem;
+            cursor: pointer;
+            transition: .2s;
+            font-family: 'Outfit', sans-serif
+        }
+
+        .tool-btn.active {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, .1)
+        }
+
+        .tool-btn:hover {
+            border-color: rgba(34, 197, 94, .4)
+        }
+
+        /* Responsive */
+        @media (max-width: 700px) {
+            .game-layout {
+                flex-direction: column
+            }
+
+            .garden-area {
+                height: 55vh
+            }
+
+            .shop {
+                width: 100%;
+                height: 45vh;
+                border-left: none;
+                border-top: 1px solid rgba(34, 197, 94, .12)
+            }
+
+            .plot {
+                width: 58px;
+                height: 58px
+            }
+
+            .plot .plant-emoji {
+                font-size: 1.4rem
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- HUD -->
+    <div class="hud">
+        <div class="hud-left">
+            <div class="hud-stat gold">🪙 <span id="goldDisplay">50</span></div>
+            <div class="hud-stat xp">✨ <span id="xpDisplay">0</span> XP</div>
+            <div class="hud-stat level">🌱 Level <span id="levelDisplay">1</span></div>
+        </div>
+        <div id="seasonBadge" class="season-badge">🌸 Spring</div>
+    </div>
+
+    <!-- Main -->
+    <div class="game-layout">
+        <!-- Garden -->
+        <div class="garden-area">
+            <div class="sky day" id="sky">
+                <div class="stars" id="starsContainer"></div>
+            </div>
+            <div id="weatherLayer"></div>
+            <div class="garden-grid" id="gardenGrid"></div>
+        </div>
+
+        <!-- Shop -->
+        <div class="shop">
+            <div class="shop-tabs">
+                <button class="shop-tab active" onclick="switchShopTab('seeds')">🌱 Seeds</button>
+                <button class="shop-tab" onclick="switchShopTab('tools')">🔧 Tools</button>
+                <button class="shop-tab" onclick="switchShopTab('info')">📊 Info</button>
+            </div>
+            <div class="shop-list" id="shopList"></div>
+            <div class="tools-bar">
+                <button class="tool-btn active" id="tool-plant" onclick="selectTool('plant')" title="Plant">🌱</button>
+                <button class="tool-btn" id="tool-water" onclick="selectTool('water')" title="Water">💧</button>
+                <button class="tool-btn" id="tool-harvest" onclick="selectTool('harvest')" title="Harvest">🧺</button>
+                <button class="tool-btn" id="tool-remove" onclick="selectTool('remove')" title="Remove">🗑</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== SEEDS =====
+        const SEEDS = [
+            { id: 'daisy', name: 'Daisy', icon: '🌼', cost: 5, growTime: 15, value: 12, xp: 5, stages: ['·', '🌱', '🌿', '🌼'], unlockLevel: 1 },
+            { id: 'tulip', name: 'Tulip', icon: '🌷', cost: 10, growTime: 25, value: 25, xp: 10, stages: ['·', '🌱', '🌿', '🌷'], unlockLevel: 1 },
+            { id: 'rose', name: 'Rose', icon: '🌹', cost: 20, growTime: 40, value: 50, xp: 18, stages: ['·', '🌱', '🪴', '🌹'], unlockLevel: 2 },
+            { id: 'sunflower', name: 'Sunflower', icon: '🌻', cost: 30, growTime: 50, value: 75, xp: 25, stages: ['·', '🌱', '🌿', '🌻'], unlockLevel: 3 },
+            { id: 'cherry', name: 'Cherry Tree', icon: '🌸', cost: 60, growTime: 80, value: 150, xp: 45, stages: ['·', '🌱', '🌳', '🌸'], unlockLevel: 4 },
+            { id: 'cactus', name: 'Neon Cactus', icon: '🌵', cost: 45, growTime: 60, value: 110, xp: 35, stages: ['·', '🌱', '🪴', '🌵'], unlockLevel: 3 },
+            { id: 'mushroom', name: 'Mushroom', icon: '🍄', cost: 35, growTime: 35, value: 85, xp: 28, stages: ['·', '💠', '🫘', '🍄'], unlockLevel: 2 },
+            { id: 'bonsai', name: 'Bonsai', icon: '🪴', cost: 80, growTime: 100, value: 200, xp: 60, stages: ['·', '🌱', '🌿', '🪴'], unlockLevel: 5 },
+            { id: 'crystal', name: 'Crystal Flower', icon: '💎', cost: 120, growTime: 120, value: 320, xp: 90, stages: ['·', '✨', '💠', '💎'], unlockLevel: 6 },
+            { id: 'star', name: 'Star Bloom', icon: '⭐', cost: 200, growTime: 150, value: 550, xp: 130, stages: ['·', '✨', '🌟', '⭐'], unlockLevel: 8 },
+            { id: 'rainbow', name: 'Rainbow Rose', icon: '🌈', cost: 350, growTime: 200, value: 900, xp: 200, stages: ['·', '🌱', '🪻', '🌈'], unlockLevel: 10 }
+        ];
+
+        // ===== UPGRADES =====
+        const UPGRADES = [
+            { id: 'speed1', name: 'Growth Boost', icon: '⚡', cost: 100, desc: 'Plants grow 20% faster', effect: () => growthMult *= 1.2, bought: false },
+            { id: 'speed2', name: 'Turbo Growth', icon: '⚡', cost: 500, desc: 'Plants grow 30% faster', effect: () => growthMult *= 1.3, bought: false },
+            { id: 'water1', name: 'Sprinkler', icon: '🚿', cost: 200, desc: 'Water lasts 50% longer', effect: () => waterDuration *= 1.5, bought: false },
+            { id: 'water2', name: 'Rain Dance', icon: '🌧️', cost: 800, desc: 'Water lasts 2x longer', effect: () => waterDuration *= 2, bought: false },
+            { id: 'value1', name: 'Green Thumb', icon: '💰', cost: 300, desc: 'Harvest value +25%', effect: () => valueMult *= 1.25, bought: false },
+            { id: 'value2', name: 'Golden Touch', icon: '👑', cost: 1500, desc: 'Harvest value +50%', effect: () => valueMult *= 1.5, bought: false },
+            { id: 'grid1', name: 'Expand Garden', icon: '📐', cost: 250, desc: 'Unlock 5×5 grid', effect: () => expandGrid(5), bought: false },
+            { id: 'grid2', name: 'Big Garden', icon: '📐', cost: 1000, desc: 'Unlock 6×6 grid', effect: () => expandGrid(6), bought: false },
+            { id: 'auto1', name: 'Auto Water', icon: '🤖', cost: 2000, desc: 'Auto-water every 30s', effect: () => autoWater = true, bought: false },
+            { id: 'xpboost', name: 'XP Boost', icon: '📚', cost: 600, desc: 'Earn 50% more XP', effect: () => xpMult *= 1.5, bought: false }
+        ];
+
+        // ===== SEASONS =====
+        const SEASONS = [
+            { name: 'Spring', icon: '🌸', color: '#ec4899', bg: 'rgba(236,72,153,.08)', growBonus: 1.2, text: '#ec4899' },
+            { name: 'Summer', icon: '☀️', color: '#eab308', bg: 'rgba(234,179,8,.08)', growBonus: 1.0, text: '#eab308' },
+            { name: 'Autumn', icon: '🍂', color: '#f97316', bg: 'rgba(249,115,22,.08)', growBonus: .8, text: '#f97316' },
+            { name: 'Winter', icon: '❄️', color: '#3b82f6', bg: 'rgba(59,130,246,.08)', growBonus: .5, text: '#3b82f6' }
+        ];
+
+        // ===== GAME STATE =====
+        let gold = 50, xp = 0, level = 1;
+        let gridSize = 4;
+        let plots = [];
+        let selectedSeed = SEEDS[0];
+        let activeTool = 'plant';
+        let growthMult = 1, valueMult = 1, xpMult = 1;
+        let waterDuration = 20; // seconds
+        let autoWater = false;
+        let currentSeason = 0;
+        let seasonTimer = 0;
+        const SEASON_LENGTH = 120; // seconds per season
+        let currentShopTab = 'seeds';
+        let totalHarvested = 0, totalEarned = 0;
+
+        // ===== INIT GRID =====
+        function initGrid() {
+            plots = [];
+            for (let i = 0; i < gridSize * gridSize; i++) {
+                plots.push({ plant: null, growth: 0, watered: 0, stage: 0 });
+            }
+            renderGarden();
+        }
+
+        function expandGrid(size) {
+            const old = plots.slice();
+            const oldSize = gridSize;
+            gridSize = size;
+            plots = [];
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    if (r < oldSize && c < oldSize) plots.push(old[r * oldSize + c]);
+                    else plots.push({ plant: null, growth: 0, watered: 0, stage: 0 });
+                }
+            }
+            renderGarden();
+        }
+
+        // ===== RENDER =====
+        function renderGarden() {
+            const grid = document.getElementById('gardenGrid');
+            grid.style.gridTemplateColumns = `repeat(${gridSize}, 72px)`;
+            grid.innerHTML = '';
+            plots.forEach((p, i) => {
+                const div = document.createElement('div');
+                div.className = 'plot' + (p.watered > 0 ? ' watered' : '');
+                div.onclick = () => plotClick(i);
+
+                if (p.plant) {
+                    const seed = SEEDS.find(s => s.id === p.plant);
+                    const stageIdx = Math.min(p.stage, seed.stages.length - 1);
+                    const isReady = p.stage >= seed.stages.length - 1;
+
+                    div.innerHTML = `<span class="plant-emoji" id="pe-${i}">${seed.stages[stageIdx]}</span>`;
+
+                    if (!isReady) {
+                        const pct = Math.min(p.growth / seed.growTime * 100, 100);
+                        div.innerHTML += `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>`;
+                    } else {
+                        div.innerHTML += `<div class="ready-glow"></div>`;
+                    }
+
+                    if (p.watered > 0) div.innerHTML += `<span class="water-icon">💧</span>`;
+                } else {
+                    div.innerHTML = `<span style="font-size:1.2rem;opacity:.15">+</span>`;
+                }
+
+                grid.appendChild(div);
+            });
+        }
+
+        // ===== PLOT CLICK =====
+        function plotClick(idx) {
+            const p = plots[idx];
+
+            if (activeTool === 'plant') {
+                if (p.plant) return; // already has plant
+                if (gold < selectedSeed.cost) return;
+                gold -= selectedSeed.cost;
+                p.plant = selectedSeed.id;
+                p.growth = 0;
+                p.stage = 0;
+                spawnFloat(idx, `-${selectedSeed.cost} 🪙`, '#ef4444');
+                bounceEmoji(idx);
+            } else if (activeTool === 'water') {
+                if (!p.plant) return;
+                p.watered = waterDuration;
+                spawnFloat(idx, '💧', '#3b82f6');
+            } else if (activeTool === 'harvest') {
+                if (!p.plant) return;
+                const seed = SEEDS.find(s => s.id === p.plant);
+                if (p.stage < seed.stages.length - 1) return; // not ready
+                const earned = Math.floor(seed.value * valueMult);
+                const earnedXp = Math.floor(seed.xp * xpMult);
+                gold += earned;
+                xp += earnedXp;
+                totalHarvested++;
+                totalEarned += earned;
+                spawnFloat(idx, `+${earned} 🪙`, '#eab308');
+                p.plant = null; p.growth = 0; p.stage = 0; p.watered = 0;
+                checkLevel();
+            } else if (activeTool === 'remove') {
+                if (!p.plant) return;
+                p.plant = null; p.growth = 0; p.stage = 0; p.watered = 0;
+                spawnFloat(idx, '🗑', '#888');
+            }
+
+            updateHUD();
+            renderGarden();
+            renderShop();
+            save();
+        }
+
+        function bounceEmoji(idx) {
+            setTimeout(() => {
+                const el = document.getElementById('pe-' + idx);
+                if (el) { el.classList.add('bounce'); setTimeout(() => el.classList.remove('bounce'), 300); }
+            }, 50);
+        }
+
+        function spawnFloat(idx, text, color) {
+            const grid = document.getElementById('gardenGrid');
+            const plotEl = grid.children[idx];
+            if (!plotEl) return;
+            const rect = plotEl.getBoundingClientRect();
+            const f = document.createElement('div');
+            f.className = 'float';
+            f.textContent = text;
+            f.style.cssText = `left:${rect.left + rect.width / 2 - 20}px;top:${rect.top}px;color:${color};font-size:.85rem`;
+            document.body.appendChild(f);
+            setTimeout(() => f.remove(), 900);
+        }
+
+        // ===== TOOL / SEED SELECT =====
+        function selectTool(tool) {
+            activeTool = tool;
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tool-' + tool).classList.add('active');
+        }
+
+        function selectSeed(id) {
+            selectedSeed = SEEDS.find(s => s.id === id);
+            renderShop();
+        }
+
+        // ===== SHOP =====
+        function switchShopTab(tab) {
+            currentShopTab = tab;
+            document.querySelectorAll('.shop-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            renderShop();
+        }
+
+        function renderShop() {
+            const list = document.getElementById('shopList');
+            if (currentShopTab === 'seeds') {
+                let html = '';
+                SEEDS.forEach(s => {
+                    const locked = level < s.unlockLevel;
+                    const selected = selectedSeed.id === s.id;
+                    const canAfford = gold >= s.cost;
+                    html += `<div class="shop-item ${locked ? 'cant-afford' : ''} ${selected ? 'selected' : ''} ${!canAfford && !locked ? 'cant-afford' : ''}" onclick="${locked ? '' : `selectSeed('${s.id}')`}">
+                        <div class="si-icon">${locked ? '🔒' : s.icon}</div>
+                        <div class="si-info">
+                            <div class="si-name">${s.name} ${locked ? `(Lvl ${s.unlockLevel})` : ''}</div>
+                            <div class="si-desc">Grows: ${s.growTime}s · Sells: ${Math.floor(s.value * valueMult)}g · ${s.xp}xp</div>
+                        </div>
+                        <div class="si-cost">🪙 ${s.cost}</div>
+                    </div>`;
+                });
+                list.innerHTML = html;
+            } else if (currentShopTab === 'tools') {
+                let html = '';
+                UPGRADES.forEach(u => {
+                    const canAfford = gold >= u.cost;
+                    html += `<div class="shop-item ${u.bought ? 'cant-afford' : ''} ${!canAfford && !u.bought ? 'cant-afford' : ''}" onclick="${u.bought ? '' : `buyUpgrade('${u.id}')`}">
+                        <div class="si-icon">${u.bought ? '✅' : u.icon}</div>
+                        <div class="si-info">
+                            <div class="si-name">${u.name}</div>
+                            <div class="si-desc">${u.desc}</div>
+                        </div>
+                        <div class="si-cost">${u.bought ? 'Owned' : '🪙 ' + u.cost}</div>
+                    </div>`;
+                });
+                list.innerHTML = html;
+            } else {
+                const season = SEASONS[currentSeason];
+                const nextLvlXp = level * 100;
+                list.innerHTML = `<div style="padding:12px">
+                    <h3 style="color:#22c55e;font-size:.9rem;margin-bottom:10px">📊 Garden Stats</h3>
+                    <div style="display:flex;justify-content:space-between;font-size:.75rem;color:#666;padding:4px 0">Gold <span style="color:#eab308;font-weight:700">${gold}</span></div>
+                    <div style="display:flex;justify-content:space-between;font-size:.75rem;color:#666;padding:4px 0">XP <span style="color:#8b5cf6;font-weight:700">${xp} / ${nextLvlXp}</span></div>
+                    <div style="display:flex;justify-content:space-between;font-size:.75rem;color:#666;padding:4px 0">Level <span style="color:#22c55e;font-weight:700">${level}</span></div>
+                    <div style="display:flex;justify-content:space-between;font-size:.75rem;color:#666;padding:4px 0">Grid Size <span style="color:#fff;font-weight:700">${gridSize}×${gridSize}</span></div>
+                    <div style="display:flex;justify-content:space-between;font-size:.75rem;color:#666;padding:4px 0">Total Harvested <span style="color:#fff;font-weight:700">${totalHarvested}</span></div>
+                    <div style="display:flex;justify-content:space-between;font-size:.75rem;color:#666;padding:4px 0">Total Earned <span style="color:#eab308;font-weight:700">${totalEarned}g</span></div>
+                    <div style="display:flex;justify-content:space-between;font-size:.75rem;color:#666;padding:4px 0">Growth Speed <span style="color:#22c55e;font-weight:700">x${growthMult.toFixed(1)}</span></div>
+                    <div style="display:flex;justify-content:space-between;font-size:.75rem;color:#666;padding:4px 0">Value Mult <span style="color:#eab308;font-weight:700">x${valueMult.toFixed(1)}</span></div>
+                    <div style="display:flex;justify-content:space-between;font-size:.75rem;color:#666;padding:4px 0">Season <span style="color:${season.text};font-weight:700">${season.icon} ${season.name} (x${season.growBonus} growth)</span></div>
+                    <div style="display:flex;justify-content:space-between;font-size:.75rem;color:#666;padding:4px 0">Auto Water <span style="color:${autoWater ? '#22c55e' : '#ef4444'};font-weight:700">${autoWater ? 'ON' : 'OFF'}</span></div>
+                    <div style="margin-top:14px;display:flex;gap:6px">
+                        <button onclick="save()" style="flex:1;padding:8px;border:none;border-radius:8px;background:rgba(34,197,94,.12);color:#22c55e;font-weight:700;cursor:pointer;font-family:Outfit;font-size:.75rem">💾 Save</button>
+                        <button onclick="if(confirm('Reset garden?')){localStorage.removeItem('jtw_garden');location.reload()}" style="flex:1;padding:8px;border:none;border-radius:8px;background:rgba(239,68,68,.12);color:#ef4444;font-weight:700;cursor:pointer;font-family:Outfit;font-size:.75rem">🗑 Reset</button>
+                    </div>
+                </div>`;
+            }
+        }
+
+        function buyUpgrade(id) {
+            const u = UPGRADES.find(x => x.id === id);
+            if (u.bought || gold < u.cost) return;
+            gold -= u.cost;
+            u.bought = true;
+            u.effect();
+            updateHUD();
+            renderShop();
+            renderGarden();
+            save();
+        }
+
+        // ===== LEVEL =====
+        function checkLevel() {
+            const needed = level * 100;
+            while (xp >= needed) {
+                xp -= needed;
+                level++;
+            }
+        }
+
+        // ===== HUD =====
+        function updateHUD() {
+            document.getElementById('goldDisplay').textContent = gold;
+            document.getElementById('xpDisplay').textContent = xp;
+            document.getElementById('levelDisplay').textContent = level;
+            const s = SEASONS[currentSeason];
+            const badge = document.getElementById('seasonBadge');
+            badge.textContent = `${s.icon} ${s.name}`;
+            badge.style.background = s.bg;
+            badge.style.color = s.text;
+            badge.style.border = `1px solid ${s.color}33`;
+        }
+
+        // ===== SKY & WEATHER =====
+        function updateSky() {
+            const t = (Date.now() / 1000 % 120) / 120; // 2 min day cycle
+            const sky = document.getElementById('sky');
+            if (t < .3) sky.className = 'sky day';
+            else if (t < .45) sky.className = 'sky sunset';
+            else if (t < .8) sky.className = 'sky night';
+            else sky.className = 'sky day';
+        }
+
+        // Stars
+        const starsC = document.getElementById('starsContainer');
+        for (let i = 0; i < 40; i++) {
+            const s = document.createElement('div');
+            s.className = 'star';
+            const sz = Math.random() * 2 + 1;
+            s.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random() * 100}%;top:${Math.random() * 60}%;animation-duration:${1 + Math.random() * 3}s;animation-delay:${Math.random() * -3}s`;
+            starsC.appendChild(s);
+        }
+
+        // ===== GAME LOOP =====
+        let lastTick = Date.now();
+        function gameTick() {
+            const now = Date.now();
+            const dt = (now - lastTick) / 1000;
+            lastTick = now;
+
+            const season = SEASONS[currentSeason];
+            let needsRender = false;
+
+            // Grow plants
+            plots.forEach(p => {
+                if (!p.plant) return;
+                const seed = SEEDS.find(s => s.id === p.plant);
+                if (p.stage >= seed.stages.length - 1) return; // already grown
+
+                let speed = growthMult * season.growBonus;
+                if (p.watered > 0) { speed *= 1.5; p.watered -= dt; if (p.watered < 0) p.watered = 0; }
+
+                p.growth += dt * speed;
+                const newStage = Math.min(Math.floor(p.growth / seed.growTime * (seed.stages.length - 1)), seed.stages.length - 1);
+                if (newStage !== p.stage) { p.stage = newStage; needsRender = true; }
+            });
+
+            // Season
+            seasonTimer += dt;
+            if (seasonTimer >= SEASON_LENGTH) {
+                seasonTimer = 0;
+                currentSeason = (currentSeason + 1) % 4;
+                updateHUD();
+            }
+
+            // Auto water
+            if (autoWater && Math.floor(now / 1000) % 30 === 0) {
+                plots.forEach(p => { if (p.plant && p.watered <= 0) p.watered = waterDuration; });
+                needsRender = true;
+            }
+
+            if (needsRender) renderGarden();
+            updateSky();
+        }
+
+        // ===== SAVE / LOAD =====
+        function save() {
+            const data = {
+                gold, xp, level, gridSize, plots, currentSeason, seasonTimer,
+                totalHarvested, totalEarned, growthMult, valueMult, xpMult,
+                waterDuration, autoWater, selectedSeedId: selectedSeed.id,
+                boughtUpgrades: UPGRADES.filter(u => u.bought).map(u => u.id),
+                timestamp: Date.now()
+            };
+            localStorage.setItem('jtw_garden', JSON.stringify(data));
+        }
+
+        function load() {
+            const raw = localStorage.getItem('jtw_garden');
+            if (!raw) return;
+            try {
+                const d = JSON.parse(raw);
+                gold = d.gold ?? 50;
+                xp = d.xp ?? 0;
+                level = d.level ?? 1;
+                gridSize = d.gridSize ?? 4;
+                plots = d.plots ?? [];
+                currentSeason = d.currentSeason ?? 0;
+                seasonTimer = d.seasonTimer ?? 0;
+                totalHarvested = d.totalHarvested ?? 0;
+                totalEarned = d.totalEarned ?? 0;
+                growthMult = d.growthMult ?? 1;
+                valueMult = d.valueMult ?? 1;
+                xpMult = d.xpMult ?? 1;
+                waterDuration = d.waterDuration ?? 20;
+                autoWater = d.autoWater ?? false;
+                if (d.selectedSeedId) selectedSeed = SEEDS.find(s => s.id === d.selectedSeedId) || SEEDS[0];
+                if (d.boughtUpgrades) {
+                    d.boughtUpgrades.forEach(id => {
+                        const u = UPGRADES.find(x => x.id === id);
+                        if (u) u.bought = true;
+                    });
+                }
+                // Offline growth
+                if (d.timestamp) {
+                    const elapsed = (Date.now() - d.timestamp) / 1000;
+                    const offlineGrowth = elapsed * .3; // 30% offline rate
+                    plots.forEach(p => {
+                        if (!p.plant) return;
+                        const seed = SEEDS.find(s => s.id === p.plant);
+                        if (p.stage >= seed.stages.length - 1) return;
+                        p.growth += offlineGrowth * growthMult;
+                        p.stage = Math.min(Math.floor(p.growth / seed.growTime * (seed.stages.length - 1)), seed.stages.length - 1);
+                    });
+                }
+            } catch (e) { }
+        }
+
+        // ===== INIT =====
+        load();
+        if (plots.length === 0) initGrid();
+        updateHUD();
+        renderGarden();
+        renderShop();
+
+        setInterval(gameTick, 200);
+        setInterval(() => { renderGarden(); renderShop(); }, 2000);
+        setInterval(save, 30000);
+    </script>
+</body>
+
+</html>
